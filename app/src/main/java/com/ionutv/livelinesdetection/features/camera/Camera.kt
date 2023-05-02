@@ -3,10 +3,13 @@ package com.ionutv.livelinesdetection.features.camera
 import android.util.Log
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionSelector.HIGH_RESOLUTION_FLAG_ON
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.ionutv.livelinesdetection.features.facedetection.FaceDetectionImageAnalyzer
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.launch
@@ -46,13 +50,14 @@ fun CameraPreview(
             )
         }
         onUseCase(Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            })
+            it.setSurfaceProvider(previewView.surfaceProvider)
+        })
         previewView
     })
 }
 
 @Composable
+@androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
 fun CameraCapture(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
@@ -76,9 +81,15 @@ fun CameraCapture(
                 .wrapContentSize()
                 .padding(16.dp)
                 .align(Alignment.BottomCenter),
-                onClick = { coroutineScope.launch { imageCaptureUseCase.takePicture(context.executor).let {
-                    onImageFile(it)
-                } } })
+                onClick = {
+                    coroutineScope.launch {
+                        onImageFile(
+                            imageCaptureUseCase.takePicture(
+                                context.executor
+                            )
+                        )
+                    }
+                })
             {
                 Text("Click!")
             }
@@ -86,10 +97,25 @@ fun CameraCapture(
         LaunchedEffect(previewUseCase) {
             val cameraProvider = context.getCameraProvider()
             try {
+                val imageAnalysisUseCase = ImageAnalysis.Builder()
+                    // enable the following line if RGBA output is needed.
+                    // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                    .setResolutionSelector(
+                        ResolutionSelector.Builder()
+                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
+                    )
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .apply { setAnalyzer(context.executor, FaceDetectionImageAnalyzer()) }
+
                 // Must unbind the use-cases before rebinding them.
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, previewUseCase, imageCaptureUseCase
+                    lifecycleOwner,
+                    cameraSelector,
+                    previewUseCase,
+                    imageCaptureUseCase,
+                    imageAnalysisUseCase
                 )
             } catch (ex: Exception) {
                 Log.e("CameraCapture", "Failed to bind camera use cases", ex)
