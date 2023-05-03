@@ -8,15 +8,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
-import androidx.camera.core.resolutionselector.ResolutionSelector
-import androidx.camera.core.resolutionselector.ResolutionSelector.HIGH_RESOLUTION_FLAG_ON
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,13 +16,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.ionutv.livelinesdetection.features.facedetection.FaceDetectionImageAnalyzer
+import com.ionutv.livelinesdetection.features.DrawFaceDetection
+import com.ionutv.livelinesdetection.features.facedetection.FaceAnalyzerResult
+import com.ionutv.livelinesdetection.features.facedetection.analyzeImage
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.launch
@@ -69,57 +61,60 @@ fun CameraCapture(
             ImageCapture.Builder().setCaptureMode(CAPTURE_MODE_MAXIMIZE_QUALITY).build()
         )
     }
-    Box(modifier = modifier) {
-        val context = LocalContext.current
-        val lifecycleOwner = LocalLifecycleOwner.current
-        var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
-        Box {
-            CameraPreview(modifier = Modifier.fillMaxSize(), onUseCase = {
-                previewUseCase = it
-            })
-            Button(modifier = Modifier
-                .wrapContentSize()
-                .padding(16.dp)
-                .align(Alignment.BottomCenter),
-                onClick = {
-                    coroutineScope.launch {
-                        onImageFile(
-                            imageCaptureUseCase.takePicture(
-                                context.executor
-                            )
-                        )
-                    }
-                })
-            {
-                Text("Click!")
+    var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
+    var faceCoordinates: FaceAnalyzerResult by remember {
+        mutableStateOf(FaceAnalyzerResult.NoFaceDetected)
+    }
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DrawFaceDetection(
+        onPreviewUseCase = {
+            previewUseCase = it
+        },
+        faceCoordinates = faceCoordinates,
+        onImageCapture = {
+            coroutineScope.launch {
+                onImageFile(
+                    imageCaptureUseCase.takePicture(
+                        context.executor
+                    )
+                )
             }
         }
-        LaunchedEffect(previewUseCase) {
-            val cameraProvider = context.getCameraProvider()
-            try {
-                val imageAnalysisUseCase = ImageAnalysis.Builder()
-                    // enable the following line if RGBA output is needed.
-                    // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                    .setResolutionSelector(
-                        ResolutionSelector.Builder()
-                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
-                    )
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .apply { setAnalyzer(context.executor, FaceDetectionImageAnalyzer()) }
+    )
+    LaunchedEffect(previewUseCase) {
+        val cameraProvider = context.getCameraProvider()
+        try {
+            val imageAnalysisUseCase = ImageAnalysis.Builder()
+                // enable the following line if RGBA output is needed.
+                // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+//                    .setResolutionSelector(
+//                        ResolutionSelector.Builder()
+//                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
+//                    )
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .apply {
+                    setAnalyzer(context.executor) {
+                        analyzeImage(it) {
+                            faceCoordinates = it
+                        }
 
-                // Must unbind the use-cases before rebinding them.
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    previewUseCase,
-                    imageCaptureUseCase,
-                    imageAnalysisUseCase
-                )
-            } catch (ex: Exception) {
-                Log.e("CameraCapture", "Failed to bind camera use cases", ex)
-            }
+                    }
+                }
+
+            // Must unbind the use-cases before rebinding them.
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                previewUseCase,
+                imageCaptureUseCase,
+                imageAnalysisUseCase
+            )
+        } catch (ex: Exception) {
+            Log.e("CameraCapture", "Failed to bind camera use cases", ex)
         }
     }
+
 }
