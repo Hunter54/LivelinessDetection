@@ -62,7 +62,7 @@ fun CameraCapture(
         )
     }
     var previewUseCase by remember { mutableStateOf<UseCase>(Preview.Builder().build()) }
-    var faceCoordinates: FaceAnalyzerResult by remember {
+    var faceImage: FaceAnalyzerResult by remember {
         mutableStateOf(FaceAnalyzerResult.NoFaceDetected)
     }
     val context = LocalContext.current
@@ -71,7 +71,7 @@ fun CameraCapture(
         onPreviewUseCase = {
             previewUseCase = it
         },
-        faceCoordinates = faceCoordinates,
+        faceImage = faceImage,
         onImageCapture = {
             coroutineScope.launch {
                 onImageFile(
@@ -95,9 +95,9 @@ fun CameraCapture(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .apply {
-                    setAnalyzer(context.executor) {
-                        analyzeImage(it) {
-                            faceCoordinates = it
+                    setAnalyzer(context.executor) {imageProxy ->
+                        analyzeImage(imageProxy) {
+                            faceImage = it
                         }
 
                     }
