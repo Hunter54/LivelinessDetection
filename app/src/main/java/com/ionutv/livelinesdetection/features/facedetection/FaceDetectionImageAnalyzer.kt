@@ -14,8 +14,8 @@ sealed interface FaceAnalyzerResult {
     object MultipleFaceInsideFrame : FaceAnalyzerResult
     object NoFaceDetected : FaceAnalyzerResult
     data class Error(val error: String) : FaceAnalyzerResult
-    data class FaceDetected(val boundaries: Rect, val imageWeidth: Int, val imageHeight: Int) : FaceAnalyzerResult
 }
+data class FaceDetected(val boundaries: Rect, val imageWidth: Int, val imageHeight: Int) : FaceAnalyzerResult
 
 @ExperimentalGetImage
 fun analyzeImage(image: ImageProxy, myCode: (FaceAnalyzerResult) -> Unit) {
@@ -44,9 +44,9 @@ fun analyzeImage(image: ImageProxy, myCode: (FaceAnalyzerResult) -> Unit) {
                 val face = faces.first()
                 val rotationDegrees: Int = inputImage.rotationDegrees
                 if (rotationDegrees == 0 || rotationDegrees == 180) {
-                    myCode(FaceAnalyzerResult.FaceDetected(face.boundingBox, image.width, image.height))
+                    myCode(FaceDetected(face.boundingBox, image.width, image.height))
                 } else {
-                    myCode(FaceAnalyzerResult.FaceDetected(face.boundingBox, image.height, image.width))
+                    myCode(FaceDetected(face.boundingBox, image.height, image.width))
                 }
             }
             .addOnFailureListener { e -> // Task failed with an exception

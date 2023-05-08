@@ -87,7 +87,7 @@ fun CameraCapture(
         try {
             val imageAnalysisUseCase = ImageAnalysis.Builder()
                 // enable the following line if RGBA output is needed.
-                // .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+//                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
 //                    .setResolutionSelector(
 //                        ResolutionSelector.Builder()
 //                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
