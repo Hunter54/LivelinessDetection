@@ -107,6 +107,7 @@ class FaceHighlight(
                 (screenHeight * imageAspectRatio - screenWidth) / 2
             postScaleHeightOffset = 0.0f
         }
+        // Translate X and Y coordinates to match image scaled for screen
         x = translateX(detectedFace.boundaries.centerX().toFloat())
         y = translateY(detectedFace.boundaries.centerY().toFloat())
 
@@ -116,13 +117,12 @@ class FaceHighlight(
         bottom = y + scale(detectedFace.boundaries.height() / 2.0f)
     }
 
-    fun translateX(x: Float) = screenWidth - (scale(x) - postScaleWidthOffset)
-    fun translateY(y: Float) = scale(y) - postScaleHeightOffset
-    fun scale(imagePixel: Float): Float = imagePixel * scaleFactor
+    private fun translateX(x: Float) = screenWidth - (scale(x) - postScaleWidthOffset)
+    private fun translateY(y: Float) = scale(y) - postScaleHeightOffset
+    private fun scale(imagePixel: Float): Float = imagePixel * scaleFactor
 
     context(DrawScope)
     fun drawFaceHighlight(){
-
         drawRect(
             color = Color.White,
             size = Size(

@@ -8,6 +8,8 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionSelector.HIGH_RESOLUTION_FLAG_ON
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,7 +69,7 @@ fun CameraCapture(
     }
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    DrawFaceDetection(
+    DrawFaceDetection( modifier = modifier,
         onPreviewUseCase = {
             previewUseCase = it
         },
@@ -87,11 +89,10 @@ fun CameraCapture(
         try {
             val imageAnalysisUseCase = ImageAnalysis.Builder()
                 // enable the following line if RGBA output is needed.
-//                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-//                    .setResolutionSelector(
-//                        ResolutionSelector.Builder()
-//                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
-//                    )
+                    .setResolutionSelector(
+                        ResolutionSelector.Builder()
+                            .setHighResolutionEnabledFlag(HIGH_RESOLUTION_FLAG_ON).build()
+                    )
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
                 .apply {

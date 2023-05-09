@@ -1,11 +1,13 @@
 package com.ionutv.livelinesdetection.features.facedetection
 
+import android.graphics.Bitmap
 import android.graphics.Rect
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.common.internal.ImageConvertUtils
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -15,7 +17,13 @@ sealed interface FaceAnalyzerResult {
     object NoFaceDetected : FaceAnalyzerResult
     data class Error(val error: String) : FaceAnalyzerResult
 }
-data class FaceDetected(val boundaries: Rect, val imageWidth: Int, val imageHeight: Int) : FaceAnalyzerResult
+
+data class FaceDetected(
+    val boundaries: Rect,
+    val imageWidth: Int,
+    val imageHeight: Int,
+    val image: Bitmap
+) : FaceAnalyzerResult
 
 @ExperimentalGetImage
 fun analyzeImage(image: ImageProxy, myCode: (FaceAnalyzerResult) -> Unit) {
@@ -43,10 +51,11 @@ fun analyzeImage(image: ImageProxy, myCode: (FaceAnalyzerResult) -> Unit) {
                 }
                 val face = faces.first()
                 val rotationDegrees: Int = inputImage.rotationDegrees
+                val bitmapImage = ImageConvertUtils.getInstance().getUpRightBitmap(inputImage)
                 if (rotationDegrees == 0 || rotationDegrees == 180) {
-                    myCode(FaceDetected(face.boundingBox, image.width, image.height))
+                    myCode(FaceDetected(face.boundingBox, image.width, image.height, bitmapImage))
                 } else {
-                    myCode(FaceDetected(face.boundingBox, image.height, image.width))
+                    myCode(FaceDetected(face.boundingBox, image.height, image.width, bitmapImage))
                 }
             }
             .addOnFailureListener { e -> // Task failed with an exception
