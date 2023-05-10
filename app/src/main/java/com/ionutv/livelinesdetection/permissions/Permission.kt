@@ -12,7 +12,7 @@ import com.google.accompanist.permissions.shouldShowRationale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun Permission(
+public fun Permission(
     permission: String,
     content: @Composable () -> Unit,
     rationale: String = "This permission is important for this app. Please grant the permission.",

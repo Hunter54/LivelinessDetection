@@ -10,14 +10,14 @@ import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-fun Context.openApplicationSettings() {
+internal fun Context.openApplicationSettings() {
     startActivity(Intent().apply {
         action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
         data = Uri.parse("package:${packageName}")
     })
 }
 
-suspend fun Context.getCameraProvider(): ProcessCameraProvider = suspendCoroutine { continuation ->
+internal suspend fun Context.getCameraProvider(): ProcessCameraProvider = suspendCoroutine { continuation ->
     ProcessCameraProvider.getInstance(this).also { future ->
         future.addListener({
             continuation.resume(future.get())
@@ -25,5 +25,5 @@ suspend fun Context.getCameraProvider(): ProcessCameraProvider = suspendCoroutin
     }
 }
 
-val Context.executor: Executor
+internal val Context.executor: Executor
     get() = ContextCompat.getMainExecutor(this)

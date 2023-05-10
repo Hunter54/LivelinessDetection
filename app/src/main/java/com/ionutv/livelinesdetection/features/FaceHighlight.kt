@@ -1,63 +1,84 @@
 package com.ionutv.livelinesdetection.features
 
-import androidx.camera.core.UseCase
+import androidx.camera.core.CameraSelector
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ionutv.livelinesdetection.features.camera.CameraPreview
+import com.ionutv.livelinesdetection.features.camera.CameraViewModel
 import com.ionutv.livelinesdetection.features.facedetection.FaceAnalyzerResult
 import com.ionutv.livelinesdetection.features.facedetection.FaceDetected
 
 @Composable
-fun CameraPreviewAndFaceHighlight(
-    onPreviewUseCase: (UseCase) -> Unit,
+internal fun CameraPreviewAndFaceHighlight(
+    cameraSelector: CameraSelector,
+    cameraViewModel: CameraViewModel,
     faceImage: FaceAnalyzerResult,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            CameraPreview(modifier = Modifier.fillMaxSize(), onUseCase = {
-                onPreviewUseCase(it)
-            })
-            Canvas(modifier = modifier.fillMaxSize()) {
-                when (faceImage) {
-                    is FaceDetected -> {
+    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-                        val faceHighlight =
-                            FaceHighlight(faceImage, maxWidth.toPx(), maxHeight.toPx())
+    key(cameraProvider){
+        Box(modifier = modifier.fillMaxSize()) {
 
-                        faceHighlight.drawFaceHighlight()
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                CameraPreview(modifier = Modifier.fillMaxSize(), onUseCase = {
+                    cameraProvider?.apply {
+                        // Must unbind the use-cases before rebinding them.
+                        unbindAll()
+                        bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            it,
+                            cameraViewModel.imageAnalysisUseCase
+                        )
+                    }
+                })
+                Canvas(modifier = modifier.fillMaxSize()) {
+                    when (faceImage) {
+                        is FaceDetected -> {
 
+                            val faceHighlight =
+                                FaceHighlight(faceImage, maxWidth.toPx(), maxHeight.toPx())
+
+                            faceHighlight.drawFaceHighlight()
+
+                        }
+
+                        is FaceAnalyzerResult.Error -> {
+
+                        }
+
+                        FaceAnalyzerResult.MultipleFaceInsideFrame -> {
+
+                        }
+
+                        FaceAnalyzerResult.NoFaceDetected -> {
+
+                        }
                     }
 
-                    is FaceAnalyzerResult.Error -> {
-
-                    }
-
-                    FaceAnalyzerResult.MultipleFaceInsideFrame -> {
-
-                    }
-
-                    FaceAnalyzerResult.NoFaceDetected -> {
-
-                    }
                 }
-
             }
         }
     }
 }
 
-class FaceHighlight(
+internal class FaceHighlight(
     private val detectedFace: FaceDetected,
     private val screenWidth: Float,
     private val screenHeight: Float

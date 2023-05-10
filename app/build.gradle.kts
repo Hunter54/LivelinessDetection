@@ -38,9 +38,11 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs = listOf("-Xcontext-receivers")
+        freeCompilerArgs = listOf("-Xcontext-receivers", "-Xexplicit-api=warning")
     }
-
+    kotlin{
+        explicitApiWarning()
+    }
     buildFeatures {
         compose = true
     }
