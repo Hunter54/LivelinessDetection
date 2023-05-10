@@ -5,12 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -23,11 +18,10 @@ import com.ionutv.livelinesdetection.features.facedetection.FaceAnalyzerResult
 import com.ionutv.livelinesdetection.features.facedetection.FaceDetected
 
 @Composable
-fun DrawFaceDetection(
+fun CameraPreviewAndFaceHighlight(
     onPreviewUseCase: (UseCase) -> Unit,
     faceImage: FaceAnalyzerResult,
     modifier: Modifier = Modifier,
-    onImageCapture: () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -58,16 +52,6 @@ fun DrawFaceDetection(
                     }
                 }
 
-            }
-            Button(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(16.dp)
-                    .align(Alignment.BottomCenter),
-                onClick = onImageCapture
-            )
-            {
-                Text("Click!")
             }
         }
     }
