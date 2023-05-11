@@ -40,7 +40,7 @@ android {
         jvmTarget = "17"
         freeCompilerArgs = listOf("-Xcontext-receivers", "-Xexplicit-api=warning")
     }
-    kotlin{
+    kotlin {
         explicitApiWarning()
     }
     buildFeatures {
@@ -49,9 +49,14 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
+
+    androidResources{
+        noCompress += "tflite"
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+
         }
     }
 }
@@ -79,4 +84,9 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+    implementation("org.tensorflow:tensorflow-lite:0.0.0-nightly-SNAPSHOT")
+    // The GPU delegate library is optional. Depend on it as needed.
+    implementation("org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly-SNAPSHOT")
+    implementation("org.tensorflow:tensorflow-lite-support:0.0.0-nightly-SNAPSHOT")
+    implementation("org.tensorflow:tensorflow-lite-gpu-api:0.0.0-nightly-SNAPSHOT")
 }
