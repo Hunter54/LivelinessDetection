@@ -32,9 +32,8 @@ internal fun CameraPreviewAndFaceHighlight(
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    key(cameraProvider){
+    key(cameraProvider) {
         Box(modifier = modifier.fillMaxSize()) {
-
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 CameraPreview(modifier = Modifier.fillMaxSize(), onUseCase = {
                     cameraProvider?.apply {
@@ -49,6 +48,16 @@ internal fun CameraPreviewAndFaceHighlight(
                     }
                 })
                 Canvas(modifier = modifier.fillMaxSize()) {
+                    val ovalWidth = maxWidth.toPx() / 1.8f
+                    val ovalHeight = maxHeight.toPx() / 2.3f
+                    val ovalX = maxWidth.toPx() / 2f - ovalWidth / 2f
+                    val ovalY = maxHeight.toPx() / 2f - ovalHeight / 2f
+                    drawOval(
+                        Color.Gray,
+                        size = Size(width = ovalWidth, height = ovalHeight),
+                        topLeft = Offset(x = ovalX, y = ovalY),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
                     when (faceImage) {
                         is FaceDetected -> {
 
@@ -127,7 +136,7 @@ internal class FaceHighlight(
     private fun scale(imagePixel: Float): Float = imagePixel * scaleFactor
 
     context(DrawScope)
-    fun drawFaceHighlight(){
+    fun drawFaceHighlight() {
         drawRect(
             color = Color.White,
             size = Size(
