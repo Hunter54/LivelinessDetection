@@ -12,19 +12,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ionutv.livelinesdetection.features.face_detection.FaceAnalyzerResult
-import com.ionutv.livelinesdetection.features.face_detection.FaceDetected
 
 @Composable
 internal fun CameraPreviewAndFaceHighlight(
     cameraSelector: CameraSelector,
     cameraViewModel: CameraViewModel,
-    faceImage: FaceAnalyzerResult,
+    classifiedFace: FaceClassifierResult,
     modifier: Modifier = Modifier,
 ) {
 
@@ -46,36 +54,37 @@ internal fun CameraPreviewAndFaceHighlight(
                         )
                     }
                 })
+                val textMeasurer = rememberTextMeasurer()
                 Canvas(modifier = modifier.fillMaxSize()) {
                     val ovalWidth = maxWidth.toPx() / 1.8f
                     val ovalHeight = maxHeight.toPx() / 2.3f
                     val ovalX = maxWidth.toPx() / 2f - ovalWidth / 2f
                     val ovalY = maxHeight.toPx() / 2f - ovalHeight / 2f
+
                     drawOval(
                         Color.Gray,
                         size = Size(width = ovalWidth, height = ovalHeight),
                         topLeft = Offset(x = ovalX, y = ovalY),
                         style = Stroke(width = 2.dp.toPx())
                     )
-                    when (faceImage) {
-                        is FaceDetected -> {
-
+                    when (classifiedFace) {
+                        is FaceClassifierResult.FaceClassified -> {
+                            drawImage(classifiedFace.croppedImage.asImageBitmap())
                             val faceHighlight =
-                                FaceHighlight(faceImage, maxWidth.toPx(), maxHeight.toPx())
-
-                            faceHighlight.drawFaceHighlight()
-
-                        }
-
-                        is FaceAnalyzerResult.Error -> {
-
-                        }
-
-                        FaceAnalyzerResult.MultipleFaceInsideFrame -> {
+                                FaceHighlight(classifiedFace, maxWidth.toPx(), maxHeight.toPx())
+                            var emotionsString = ""
+                            classifiedFace.emotions.forEach {
+                                emotionsString += "${it.title} : ${it.confidence}\n"
+                            }
+                            faceHighlight.drawFaceHighlight(textMeasurer, emotionsString)
 
                         }
 
-                        FaceAnalyzerResult.NoFaceDetected -> {
+                        is FaceClassifierResult.Error -> {
+
+                        }
+
+                        FaceClassifierResult.NoFaceDetected -> {
 
                         }
                     }
@@ -87,14 +96,14 @@ internal fun CameraPreviewAndFaceHighlight(
 }
 
 internal class FaceHighlight(
-    private val detectedFace: FaceDetected,
+    private val faceImage: FaceClassifierResult.FaceClassified,
     private val screenWidth: Float,
     private val screenHeight: Float
 ) {
 
     val viewAspectRatio = screenWidth / screenHeight
     val imageAspectRatio =
-        detectedFace.imageWidth.toFloat() / detectedFace.imageHeight.toFloat()
+        faceImage.image.width.toFloat() / faceImage.image.height.toFloat()
     val scaleFactor: Float
     val postScaleHeightOffset: Float
     val postScaleWidthOffset: Float
@@ -109,25 +118,25 @@ internal class FaceHighlight(
     init {
         if (viewAspectRatio > imageAspectRatio) {
             // The image needs to be vertically cropped to be displayed in this view.
-            scaleFactor = screenWidth / detectedFace.imageWidth
+            scaleFactor = screenWidth / faceImage.image.width
             postScaleHeightOffset =
                 (screenWidth / imageAspectRatio - screenHeight) / 2
             postScaleWidthOffset = 0.0f
         } else {
             // The image needs to be horizontally cropped to be displayed in this view.
-            scaleFactor = screenHeight / detectedFace.imageHeight
+            scaleFactor = screenHeight / faceImage.image.height
             postScaleWidthOffset =
                 (screenHeight * imageAspectRatio - screenWidth) / 2
             postScaleHeightOffset = 0.0f
         }
         // Translate X and Y coordinates to match image scaled for screen
-        x = translateX(detectedFace.boundaries.centerX().toFloat())
-        y = translateY(detectedFace.boundaries.centerY().toFloat())
+        x = translateX(faceImage.boundaries.centerX().toFloat())
+        y = translateY(faceImage.boundaries.centerY().toFloat())
 
-        left = x - scale(detectedFace.boundaries.width() / 2.0f)
-        top = y - scale(detectedFace.boundaries.height() / 2.0f)
-        right = x + scale(detectedFace.boundaries.width() / 2.0f)
-        bottom = y + scale(detectedFace.boundaries.height() / 2.0f)
+        left = x - scale(faceImage.boundaries.width() / 2.0f)
+        top = y - scale(faceImage.boundaries.height() / 2.0f)
+        right = x + scale(faceImage.boundaries.width() / 2.0f)
+        bottom = y + scale(faceImage.boundaries.height() / 2.0f)
     }
 
     private fun translateX(x: Float) = screenWidth - (scale(x) - postScaleWidthOffset)
@@ -135,14 +144,37 @@ internal class FaceHighlight(
     private fun scale(imagePixel: Float): Float = imagePixel * scaleFactor
 
     context(DrawScope)
-    fun drawFaceHighlight() {
+    @OptIn(ExperimentalTextApi::class)
+    fun drawFaceHighlight(textMeasurer: TextMeasurer, text: String) {
+        val annotatedText = buildAnnotatedString {
+            withStyle(
+                style = SpanStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            ) {
+                append(text)
+            }
+        }
+        val result = textMeasurer.measure(annotatedText)
+        drawRect(
+            color = Color.Gray,
+            topLeft = Offset(left, top - result.size.height),
+            size = Size(result.size.width.toFloat(), result.size.height.toFloat())
+        )
+        drawText(
+            textMeasurer = textMeasurer,
+            annotatedText,
+            topLeft = Offset(left, top - result.size.height)
+        )
         drawRect(
             color = Color.White,
             size = Size(
                 (left - right),
                 (bottom - top)
             ),
-            //Image is flipped to x needs to be right not left
+            //Image is flipped so x needs to be right not left
             topLeft = Offset(
                 right,
                 top

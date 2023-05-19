@@ -10,21 +10,23 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 
-public sealed interface FaceAnalyzerResult {
-    public object MultipleFaceInsideFrame : FaceAnalyzerResult
-    public object NoFaceDetected : FaceAnalyzerResult
-    public data class Error(val error: String) : FaceAnalyzerResult
+internal sealed interface FaceDetectionResult {
+    object MultipleFaceInsideFrame : FaceDetectionResult
+    object NoFaceDetected : FaceDetectionResult
+    data class Error(val error: String) : FaceDetectionResult
 }
 
 internal data class FaceDetected(
     val boundaries: Rect,
-    val imageWidth: Int,
-    val imageHeight: Int,
     val image: Bitmap
-) : FaceAnalyzerResult
+) : FaceDetectionResult
 
 @ExperimentalGetImage
-internal inline fun analyzeImage(image: ImageProxy, allowedFaceWidth: Float = 0.3f, crossinline onFaceAnalysisResult: (FaceAnalyzerResult) -> Unit) {
+internal inline fun analyzeImage(
+    image: ImageProxy,
+    allowedFaceWidth: Float = 0.3f,
+    crossinline onFaceAnalysisResult: (FaceDetectionResult) -> Unit
+) {
     val mediaImage = image.image
     if (mediaImage != null) {
         val inputImage = InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees)
@@ -40,32 +42,42 @@ internal inline fun analyzeImage(image: ImageProxy, allowedFaceWidth: Float = 0.
         detector.process(inputImage)
             .addOnSuccessListener { faces ->
                 if (faces.isEmpty()) {
-                    onFaceAnalysisResult(FaceAnalyzerResult.NoFaceDetected)
+                    onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
                     return@addOnSuccessListener
                 }
                 if (faces.size > 1) {
-                    onFaceAnalysisResult(FaceAnalyzerResult.MultipleFaceInsideFrame)
+                    onFaceAnalysisResult(FaceDetectionResult.MultipleFaceInsideFrame)
                     return@addOnSuccessListener
                 }
                 val face = faces.first()
                 val rotationDegrees: Int = inputImage.rotationDegrees
                 val bitmapImage = ImageConvertUtils.getInstance().getUpRightBitmap(inputImage)
                 if (rotationDegrees == 0 || rotationDegrees == 180) {
-//                    if(face.boundingBox.width().toFloat() / image.width.toFloat()  < 0.30 ){
-//                        myCode(FaceAnalyzerResult.NoFaceDetected)
-//                        return@addOnSuccessListener
-//                    }
-                    onFaceAnalysisResult(FaceDetected(face.boundingBox, image.width, image.height, bitmapImage))
+                    if(face.boundingBox.width().toFloat() / image.width.toFloat()  < 0.30 ){
+                        onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
+                        return@addOnSuccessListener
+                    }
+                    onFaceAnalysisResult(
+                        FaceDetected(
+                            face.boundingBox,
+                            bitmapImage
+                        )
+                    )
                 } else {
-//                    if(face.boundingBox.width().toFloat() / image.height.toFloat()  < 0.30 ){
-//                        myCode(FaceAnalyzerResult.NoFaceDetected)
-//                        return@addOnSuccessListener
-//                    }
-                    onFaceAnalysisResult(FaceDetected(face.boundingBox, image.height, image.width, bitmapImage))
+                    if(face.boundingBox.width().toFloat() / image.height.toFloat()  < 0.30 ){
+                        onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
+                        return@addOnSuccessListener
+                    }
+                    onFaceAnalysisResult(
+                        FaceDetected(
+                            face.boundingBox,
+                            bitmapImage
+                        )
+                    )
                 }
             }
             .addOnFailureListener { e -> // Task failed with an exception
-                onFaceAnalysisResult(FaceAnalyzerResult.Error(e.localizedMessage.toString()))
+                onFaceAnalysisResult(FaceDetectionResult.Error(e.localizedMessage.toString()))
             }
             .addOnCompleteListener {
                 // When the image is from CameraX analysis use case, must call image.close() on received

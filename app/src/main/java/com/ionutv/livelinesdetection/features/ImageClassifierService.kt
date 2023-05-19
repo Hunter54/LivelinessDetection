@@ -14,6 +14,14 @@ import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.label.TensorLabel
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import java.nio.MappedByteBuffer
+import kotlin.math.roundToInt
+
+public data class ClassifierResult(
+    val id: String,
+    val title: String,
+    val confidence: Float,
+    var location: RectF?
+)
 
 internal abstract class ImageClassifierService constructor(
     context: Context,
@@ -24,14 +32,12 @@ internal abstract class ImageClassifierService constructor(
     private val maxResultNumber: Int = 3,
 ) {
     companion object {
-
-
-        private const val LOG_TAG = "TENSERFLOW_LITE_TAG"
+        private const val LOG_TAG = "TENSERFLOW_EMOTION_LITE_TAG"
     }
 
     private val tfliteModel: MappedByteBuffer = FileUtil.loadMappedFile(context, modelPath)
 
-    private val labels: MutableList<String> = FileUtil.loadLabels(context, labelPath)
+    private val labels: List<String> = FileUtil.loadLabels(context, labelPath)
 
     protected var imageSizeX: Int
 
@@ -56,13 +62,6 @@ internal abstract class ImageClassifierService constructor(
 
     private val tflite: Interpreter = Interpreter(tfliteModel, tfliteOptions)
 
-    data class Recognition(
-        val id: String,
-        val title: String,
-        val confidence: Float,
-        var location: RectF?
-    )
-
     init {
         val imageTensorIndex = 0
         val imageShape = tflite.getInputTensor(imageTensorIndex).shape() // {1, height, width, 3}
@@ -83,7 +82,7 @@ internal abstract class ImageClassifierService constructor(
 
     abstract fun preProcessAndLoadImage(bitmap: Bitmap): TensorImage
 
-    fun processImage(bitmap: Bitmap): List<Recognition> {
+    fun processImage(bitmap: Bitmap): List<ClassifierResult> {
         inputImageBuffer = preProcessAndLoadImage(bitmap)
 
         tflite.run(inputImageBuffer.buffer, outputProbabilityBuffer.buffer.rewind())
@@ -94,18 +93,22 @@ internal abstract class ImageClassifierService constructor(
         return getTopProbability(labeledProbability)
     }
 
+    fun closeResource(){
+        tflite.close()
+    }
+
     private fun getTopProbability(
         labelProb: Map<String, Float?>,
         numberOfProbabilities: Int = maxResultNumber,
-    ): List<Recognition> {
+    ): List<ClassifierResult> {
         // Find the best classifications.
         val list = buildList {
             labelProb.forEach {
-                it.value?.let { it1 ->
+                it.value?.let { value ->
                     add(
-                        Recognition(
+                        ClassifierResult(
                             it.key, it.key,
-                            it1, null
+                            (value * 10000).roundToInt() / 100f, null
                         )
                     )
                 }
