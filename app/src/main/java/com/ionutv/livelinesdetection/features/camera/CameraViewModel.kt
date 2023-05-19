@@ -15,7 +15,6 @@ import com.ionutv.livelinesdetection.features.emotion_detection.EmotionImageClas
 import com.ionutv.livelinesdetection.features.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.face_detection.FaceDetectionResult
 import com.ionutv.livelinesdetection.features.face_detection.analyzeImage
-import com.ionutv.livelinesdetection.features.similarity_classifier.MobileFaceNetSimilarityClassifier
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,18 +30,12 @@ internal class CameraViewModel(application: Application) : AndroidViewModel(appl
 
     private val emotionClassifier = EmotionImageClassifier(application)
 
-    private val faceRecognitionClassifier = MobileFaceNetSimilarityClassifier(application)
-
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
             emit(it)
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    init {
-        Log.d("TEEEEEEST", faceRecognitionClassifier.toString())
-    }
 
     val imageAnalysisUseCase = ImageAnalysis.Builder()
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -57,7 +50,7 @@ internal class CameraViewModel(application: Application) : AndroidViewModel(appl
 
                         is FaceDetected -> {
                             val croppedBitmap = cropBitmapExample(it.image, it.boundaries)
-                            val result = emotionClassifier.processImage(croppedBitmap)
+                            val result = emotionClassifier.classifyEmotions(croppedBitmap)
 //                            val test = faceRecognitionClassifier.processImage(croppedBitmap)
                             if (result.isNotEmpty()) {
                                 Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
