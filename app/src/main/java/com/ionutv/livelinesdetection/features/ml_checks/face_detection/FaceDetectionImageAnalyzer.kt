@@ -1,4 +1,4 @@
-package com.ionutv.livelinesdetection.features.face_detection
+package com.ionutv.livelinesdetection.features.ml_checks.face_detection
 
 import android.graphics.Bitmap
 import android.graphics.Rect
@@ -53,7 +53,7 @@ internal inline fun analyzeImage(
                 val rotationDegrees: Int = inputImage.rotationDegrees
                 val bitmapImage = ImageConvertUtils.getInstance().getUpRightBitmap(inputImage)
                 if (rotationDegrees == 0 || rotationDegrees == 180) {
-                    if(face.boundingBox.width().toFloat() / image.width.toFloat()  < 0.30 ){
+                    if (face.boundingBox.width().toFloat() / image.width.toFloat() < 0.30) {
                         onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
                         return@addOnSuccessListener
                     }
@@ -64,7 +64,7 @@ internal inline fun analyzeImage(
                         )
                     )
                 } else {
-                    if(face.boundingBox.width().toFloat() / image.height.toFloat()  < 0.30 ){
+                    if (face.boundingBox.width().toFloat() / image.height.toFloat() < 0.30) {
                         onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
                         return@addOnSuccessListener
                     }

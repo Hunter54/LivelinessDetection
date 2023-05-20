@@ -1,11 +1,9 @@
-package com.ionutv.livelinesdetection.features.emotion_detection
+package com.ionutv.livelinesdetection.features.ml_checks.emotion_detection
 
-import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Rect
-import com.ionutv.livelinesdetection.features.ClassifierResult
-import com.ionutv.livelinesdetection.features.ImageClassifierService
+import com.ionutv.livelinesdetection.features.ml_checks.ClassifierResult
+import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.common.TensorOperator
 import org.tensorflow.lite.support.common.TensorProcessor
@@ -24,10 +22,10 @@ import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 internal class EmotionImageClassifier(
-    application: Application,
+    context: Context,
     private val maxResultNumber: Int = 3
 ) : ImageClassifierService(
-    application,
+    context,
     "emotion_model.tflite",
     "emotion_label.txt",
 ) {
@@ -102,22 +100,6 @@ internal class EmotionImageClassifier(
             return output
         }
 
-    }
-
-    companion object {
-        internal fun cropBitmapExample(
-            bitmap: Bitmap,
-            rect: Rect
-        ): Bitmap {
-            val ret = Bitmap.createBitmap(
-                (rect.width() * 1.2f).toInt(),
-                (rect.height() * 1.2f).toInt(),
-                bitmap.config
-            )
-            val canvas = Canvas(ret)
-            canvas.drawBitmap(bitmap, -rect.left * 0.90.toFloat(), -rect.top * 0.90.toFloat(), null)
-            return ret
-        }
     }
 
 }

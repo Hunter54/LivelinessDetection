@@ -1,7 +1,9 @@
-package com.ionutv.livelinesdetection.features
+package com.ionutv.livelinesdetection.features.ml_checks
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Rect
 import android.graphics.RectF
 import android.util.Log
 import org.tensorflow.lite.Interpreter
@@ -25,6 +27,19 @@ internal abstract class ImageClassifierService constructor(
 ) {
     companion object {
         private const val LOG_TAG = "TENSERFLOW_EMOTION_LITE_TAG"
+        fun cropBitmapExample(
+            bitmap: Bitmap,
+            rect: Rect
+        ): Bitmap {
+            val ret = Bitmap.createBitmap(
+                (rect.width() * 1.2f).toInt(),
+                (rect.height() * 1.2f).toInt(),
+                bitmap.config
+            )
+            val canvas = Canvas(ret)
+            canvas.drawBitmap(bitmap, -rect.left * 0.90.toFloat(), -rect.top * 0.90.toFloat(), null)
+            return ret
+        }
     }
 
     //Retrieve labels only if path is not empty
