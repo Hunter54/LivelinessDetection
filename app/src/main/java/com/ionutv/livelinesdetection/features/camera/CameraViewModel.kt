@@ -2,12 +2,14 @@ package com.ionutv.livelinesdetection.features.camera
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Rect
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ionutv.livelinesdetection.R
 import com.ionutv.livelinesdetection.features.ml_checks.ClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.ImageAnalyzer
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
@@ -27,7 +29,21 @@ internal class CameraViewModel(application: Application) : AndroidViewModel(appl
     private val faceNetFaceRecognition = FaceNetFaceRecognition(application)
 
     private val imageAnalyzer =
-        ImageAnalyzer(application, viewModelScope, emotionClassifier, faceNetFaceRecognition)
+        ImageAnalyzer(
+            application, viewModelScope, emotionClassifier, faceNetFaceRecognition,
+            LivelinessDetectionOption.RANDOM_EMOTION_BLINK
+        )
+
+    init {
+        val ionut = BitmapFactory.decodeResource(application.resources, R.drawable.ionut)
+        val paul = BitmapFactory.decodeResource(application.resources, R.drawable.paul)
+        val dorian = BitmapFactory.decodeResource(application.resources, R.drawable.dorian)
+        val fabian = BitmapFactory.decodeResource(application.resources, R.drawable.fabian)
+        imageAnalyzer.addImageToFaceList(ionut, "ionut")
+        imageAnalyzer.addImageToFaceList(paul, "paul")
+        imageAnalyzer.addImageToFaceList(dorian, "dorian")
+        imageAnalyzer.addImageToFaceList(fabian, "fabian")
+    }
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
@@ -62,9 +78,9 @@ internal sealed interface FaceClassifierResult {
         val boundaries: Rect,
         val image: Bitmap,
         val croppedImage: Bitmap,
-        val emotions: List<ClassifierResult>
+        val emotions: List<ClassifierResult>,
+        val name: String = ""
     ) : FaceClassifierResult
-
 }
 
 internal fun cropBitmap(

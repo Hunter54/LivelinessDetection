@@ -76,7 +76,11 @@ internal fun CameraPreviewAndFaceHighlight(
                             classifiedFace.emotions.forEach {
                                 emotionsString += "${it.title} : ${it.confidence}\n"
                             }
-                            faceHighlight.drawFaceHighlight(textMeasurer, emotionsString)
+                            faceHighlight.drawFaceHighlight(
+                                textMeasurer,
+                                emotionsString,
+                                classifiedFace.name
+                            )
 
                         }
 
@@ -145,7 +149,7 @@ internal class FaceHighlight(
 
     context(DrawScope)
     @OptIn(ExperimentalTextApi::class)
-    fun drawFaceHighlight(textMeasurer: TextMeasurer, text: String) {
+    fun drawFaceHighlight(textMeasurer: TextMeasurer, emotions: String, name: String) {
         val annotatedText = buildAnnotatedString {
             withStyle(
                 style = SpanStyle(
@@ -154,7 +158,10 @@ internal class FaceHighlight(
                     color = Color.White
                 )
             ) {
-                append(text)
+                if (name.isNotEmpty()) {
+                    append(name + "\n")
+                }
+                append(emotions)
             }
         }
         val result = textMeasurer.measure(annotatedText)

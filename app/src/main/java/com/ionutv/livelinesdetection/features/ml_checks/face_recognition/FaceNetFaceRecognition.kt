@@ -41,15 +41,17 @@ internal class FaceNetFaceRecognition(context: Context) : ImageClassifierService
             .build().process(inputImageBuffer)
     }
 
-    fun computeL2Normalisation(first: FloatArray, second: FloatArray): Float {
-        return sqrt(first.mapIndexed { i, j -> (j - second[i]).pow(2) }.sum())
-    }
+    companion object{
+        fun computeL2Normalisation(first: FloatArray, second: FloatArray): Float {
+            return sqrt(first.mapIndexed { i, j -> (j - second[i]).pow(2) }.sum())
+        }
 
-    fun computeCosineSimilarity(first: FloatArray, second: FloatArray): Float {
-        val mag1 = sqrt(first.map { it * it }.sum())
-        val mag2 = sqrt(second.map { it * it }.sum())
-        val dot = first.mapIndexed { i, j -> j * second[i] }.sum()
-        return dot / (mag1 * mag2)
+        fun computeCosineSimilarity(first: FloatArray, second: FloatArray): Float {
+            val mag1 = sqrt(first.map { it * it }.sum())
+            val mag2 = sqrt(second.map { it * it }.sum())
+            val dot = first.mapIndexed { i, j -> j * second[i] }.sum()
+            return dot / (mag1 * mag2)
+        }
     }
 
     private class StandardizeOp : TensorOperator {
