@@ -9,6 +9,7 @@ import com.google.mlkit.vision.common.internal.ImageConvertUtils
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import kotlin.math.roundToInt
 
 internal sealed interface FaceDetectionResult {
     object MultipleFaceInsideFrame : FaceDetectionResult
@@ -18,14 +19,18 @@ internal sealed interface FaceDetectionResult {
 
 internal data class FaceDetected(
     val boundaries: Rect,
-    val image: Bitmap
+    val image: Bitmap,
+    val headAngle: Int,
+    val smiling: Boolean? = null,
+    val eyesOpen: Boolean? = null,
 ) : FaceDetectionResult
 
 @ExperimentalGetImage
-internal inline fun analyzeImage(
+internal fun detectFace(
     image: ImageProxy,
     allowedFaceWidth: Float = 0.3f,
-    crossinline onFaceAnalysisResult: (FaceDetectionResult) -> Unit
+    detectSmilingOrEyesOpen: Boolean = false,
+    onFaceAnalysisResult: (FaceDetectionResult) -> Unit
 ) {
     val mediaImage = image.image
     if (mediaImage != null) {
@@ -34,7 +39,10 @@ internal inline fun analyzeImage(
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
             .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
+            .setClassificationMode(
+                if (detectSmilingOrEyesOpen) FaceDetectorOptions.CLASSIFICATION_MODE_ALL
+                else FaceDetectorOptions.CLASSIFICATION_MODE_NONE
+            )
             .setMinFaceSize(0.9f)
             .build()
 
@@ -52,28 +60,37 @@ internal inline fun analyzeImage(
                 val face = faces.first()
                 val rotationDegrees: Int = inputImage.rotationDegrees
                 val bitmapImage = ImageConvertUtils.getInstance().getUpRightBitmap(inputImage)
-                if (rotationDegrees == 0 || rotationDegrees == 180) {
-                    if (face.boundingBox.width().toFloat() / image.width.toFloat() < 0.30) {
-                        onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
-                        return@addOnSuccessListener
+
+                fun isFaceWideEnough(
+                    rotationDegrees: Int,
+                    faceWidth: Float,
+                    image: ImageProxy,
+                    allowedFaceWidth: Float
+                ): Boolean {
+                    return if (rotationDegrees == 0 || rotationDegrees == 180) {
+                        (faceWidth / image.width.toFloat() > allowedFaceWidth)
+                    } else {
+                        (faceWidth / image.height.toFloat() > allowedFaceWidth)
                     }
+                }
+
+                if (isFaceWideEnough(
+                        rotationDegrees,
+                        face.boundingBox.width().toFloat(),
+                        image,
+                        allowedFaceWidth
+                    )
+                ) {
                     onFaceAnalysisResult(
                         FaceDetected(
                             face.boundingBox,
-                            bitmapImage
+                            bitmapImage,
+                            face.headEulerAngleY.roundToInt()
                         )
                     )
+
                 } else {
-                    if (face.boundingBox.width().toFloat() / image.height.toFloat() < 0.30) {
-                        onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
-                        return@addOnSuccessListener
-                    }
-                    onFaceAnalysisResult(
-                        FaceDetected(
-                            face.boundingBox,
-                            bitmapImage
-                        )
-                    )
+                    onFaceAnalysisResult(FaceDetectionResult.NoFaceDetected)
                 }
             }
             .addOnFailureListener { e -> // Task failed with an exception
@@ -87,43 +104,3 @@ internal inline fun analyzeImage(
             }
     }
 }
-
-//@ExperimentalGetImage
-//class FaceDetectionImageAnalyzer : ImageAnalysis.Analyzer {
-//
-//    override fun analyze(image: ImageProxy) {
-//        val mediaImage = image.image
-//        if (mediaImage != null) {
-//            val inputImage =
-//                InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees)
-//            val options = FaceDetectorOptions.Builder()
-//                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-//                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-//                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
-//                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_NONE)
-//                .setMinFaceSize(0.9f)
-//                .build()
-//
-//            val detector: FaceDetector = FaceDetection.getClient(options)
-//            detector.process(inputImage)
-//                .addOnSuccessListener { faces ->
-//                    image.close()
-//                    faces.forEach {
-//                        val smileProbability = it.smilingProbability
-//                    }
-//                }
-//                .addOnFailureListener(
-//                    OnFailureListener { e -> // Task failed with an exception
-//                        e.printStackTrace()
-//                    })
-//                .addOnCompleteListener {
-//                    // When the image is from CameraX analysis use case, must call image.close() on received
-//                    // images when finished using them. Otherwise, new images may not be received or the camera
-//                    // may stall.
-////                    image.close()
-//                }
-//
-//        }
-//
-//    }
-//}

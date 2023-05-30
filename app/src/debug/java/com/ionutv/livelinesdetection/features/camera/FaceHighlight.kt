@@ -27,6 +27,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 
 @Composable
 internal fun CameraPreviewAndFaceHighlight(
@@ -79,7 +80,8 @@ internal fun CameraPreviewAndFaceHighlight(
                             faceHighlight.drawFaceHighlight(
                                 textMeasurer,
                                 emotionsString,
-                                classifiedFace.name
+                                classifiedFace.name,
+                                classifiedFace.faceAngle
                             )
 
                         }
@@ -149,7 +151,7 @@ internal class FaceHighlight(
 
     context(DrawScope)
     @OptIn(ExperimentalTextApi::class)
-    fun drawFaceHighlight(textMeasurer: TextMeasurer, emotions: String, name: String) {
+    fun drawFaceHighlight(textMeasurer: TextMeasurer, emotions: String, name: String, faceAngle: Int) {
         val annotatedText = buildAnnotatedString {
             withStyle(
                 style = SpanStyle(
@@ -161,6 +163,7 @@ internal class FaceHighlight(
                 if (name.isNotEmpty()) {
                     append(name + "\n")
                 }
+                append("Y angle: $faceAngle \n")
                 append(emotions)
             }
         }

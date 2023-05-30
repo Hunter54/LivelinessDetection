@@ -1,46 +1,50 @@
 package com.ionutv.livelinesdetection.features.ml_checks
 
-import android.content.Context
+import android.app.Application
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.ionutv.livelinesdetection.features.camera.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.camera.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
-import com.ionutv.livelinesdetection.features.ml_checks.face_detection.analyzeImage
+import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
-import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition.Companion.computeCosineSimilarity
-import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition.Companion.computeL2Normalisation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
-internal class ImageAnalyzer(
-    private val context: Context,
+internal open class ImageAnalyzerCommon(
+    private val application: Application,
     private val viewModelScope: CoroutineScope,
-    private val emotionImageClassifier: EmotionImageClassifier,
-    private val faceNetFaceRecognition: FaceNetFaceRecognition,
     private val detectionOption: LivelinessDetectionOption
 ) : ImageAnalysis.Analyzer {
 
-    private val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
-    val resultFlow = _resultFlow.asSharedFlow()
-
-    private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
-    var faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
+    private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
+    private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
     private var isProcessing = false
     private val metricToBeUsed = MetricUsed.L2
+    private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
+
+    protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
+    val resultFlow = _resultFlow.asSharedFlow()
+
+    var faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
+
     fun addImageToFaceList(bitmap: Bitmap, name: String) {
         val p = ArrayList<Float>()
 
         val result = faceNetFaceRecognition.processImage(bitmap)
         faceList.add(FaceNetFaceRecognition.FaceRecognitionResult(name, result.floatArray))
+    }
+
+    fun closeResources() {
+        emotionClassifier.closeResource()
+        faceNetFaceRecognition.closeResource()
     }
 
     @ExperimentalGetImage
@@ -50,7 +54,7 @@ internal class ImageAnalyzer(
             return
         }
         isProcessing = true
-        analyzeImage(image) {
+        detectFace(image) {
             viewModelScope.launch {
                 when (it) {
                     is FaceDetectionResult.Error -> {
@@ -93,7 +97,7 @@ internal class ImageAnalyzer(
 //        }
         val croppedBitmap =
             ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
-        val result = emotionImageClassifier.classifyEmotions(croppedBitmap)
+        val result = emotionClassifier.classifyEmotions(croppedBitmap)
         if (result.isNotEmpty()) {
             Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
         }
@@ -105,7 +109,8 @@ internal class ImageAnalyzer(
                 image = it.image,
                 croppedImage = croppedBitmap,
                 emotions = result,
-                name = userName
+                name = userName,
+                faceAngle = it.headAngle
             )
         )
     }
@@ -118,11 +123,21 @@ internal class ImageAnalyzer(
                 val p = ArrayList<Float>()
                 when (metricToBeUsed) {
                     MetricUsed.COSINE -> {
-                        p.add(computeCosineSimilarity(subject, face.embedding))
+                        p.add(
+                            FaceNetFaceRecognition.computeCosineSimilarity(
+                                subject,
+                                face.embedding
+                            )
+                        )
                     }
 
                     MetricUsed.L2 -> {
-                        p.add(computeL2Normalisation(subject, face.embedding))
+                        p.add(
+                            FaceNetFaceRecognition.computeL2Normalisation(
+                                subject,
+                                face.embedding
+                            )
+                        )
                     }
                 }
                 nameScoreHashmap[face.name] = p
@@ -132,13 +147,13 @@ internal class ImageAnalyzer(
                 when (metricToBeUsed) {
                     MetricUsed.COSINE -> {
                         nameScoreHashmap[face.name]?.add(
-                            computeCosineSimilarity(subject, face.embedding)
+                            FaceNetFaceRecognition.computeCosineSimilarity(subject, face.embedding)
                         )
                     }
 
                     MetricUsed.L2 -> {
                         nameScoreHashmap[face.name]?.add(
-                            computeL2Normalisation(subject, face.embedding)
+                            FaceNetFaceRecognition.computeL2Normalisation(subject, face.embedding)
                         )
                     }
                 }
@@ -152,7 +167,7 @@ internal class ImageAnalyzer(
         val names = nameScoreHashmap.keys.toTypedArray()
         nameScoreHashmap.clear()
 
-        val bestScoreName = when(metricToBeUsed){
+        val bestScoreName = when (metricToBeUsed) {
             MetricUsed.COSINE -> {
                 if (avgScores.maxOrNull()!! > 0.4f) {
                     names[avgScores.indexOf(avgScores.maxOrNull()!!)]
@@ -160,6 +175,7 @@ internal class ImageAnalyzer(
                     "Unknown"
                 }
             }
+
             MetricUsed.L2 -> {
                 if (avgScores.minOrNull()!! > 10f) {
                     "Unknown"

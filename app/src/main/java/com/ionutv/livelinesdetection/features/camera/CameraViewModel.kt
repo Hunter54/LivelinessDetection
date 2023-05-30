@@ -2,48 +2,32 @@ package com.ionutv.livelinesdetection.features.camera
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Rect
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.ionutv.livelinesdetection.R
-import com.ionutv.livelinesdetection.features.ml_checks.ClassifierResult
+import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.ImageAnalyzer
-import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
-import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 
-
 @OptIn(ExperimentalGetImage::class)
-internal class CameraViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val emotionClassifier = EmotionImageClassifier(application)
-
-    private val faceNetFaceRecognition = FaceNetFaceRecognition(application)
+internal class CameraViewModel(
+    application: Application,
+    detectionOption: LivelinessDetectionOption
+) :
+    AndroidViewModel(application) {
 
     private val imageAnalyzer =
         ImageAnalyzer(
-            application, viewModelScope, emotionClassifier, faceNetFaceRecognition,
-            LivelinessDetectionOption.RANDOM_EMOTION_BLINK
+            application, viewModelScope,
+            detectionOption
         )
-
-    init {
-        val ionut = BitmapFactory.decodeResource(application.resources, R.drawable.ionut)
-        val paul = BitmapFactory.decodeResource(application.resources, R.drawable.paul)
-        val dorian = BitmapFactory.decodeResource(application.resources, R.drawable.dorian)
-        val fabian = BitmapFactory.decodeResource(application.resources, R.drawable.fabian)
-        imageAnalyzer.addImageToFaceList(ionut, "ionut")
-        imageAnalyzer.addImageToFaceList(paul, "paul")
-        imageAnalyzer.addImageToFaceList(dorian, "dorian")
-        imageAnalyzer.addImageToFaceList(fabian, "fabian")
-    }
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
@@ -65,22 +49,9 @@ internal class CameraViewModel(application: Application) : AndroidViewModel(appl
         }
 
     override fun onCleared() {
-        emotionClassifier.closeResource()
+        imageAnalyzer.closeResources()
         super.onCleared()
     }
-}
-
-internal sealed interface FaceClassifierResult {
-    object NoFaceDetected : FaceClassifierResult
-    data class Error(val message: String) : FaceClassifierResult
-
-    data class FaceClassified(
-        val boundaries: Rect,
-        val image: Bitmap,
-        val croppedImage: Bitmap,
-        val emotions: List<ClassifierResult>,
-        val name: String = ""
-    ) : FaceClassifierResult
 }
 
 internal fun cropBitmap(
