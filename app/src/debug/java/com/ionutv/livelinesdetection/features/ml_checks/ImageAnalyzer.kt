@@ -3,7 +3,6 @@ package com.ionutv.livelinesdetection.features.ml_checks
 import android.app.Application
 import android.graphics.BitmapFactory
 import com.ionutv.livelinesdetection.R
-import com.ionutv.livelinesdetection.features.camera.LivelinessDetectionOption
 import kotlinx.coroutines.CoroutineScope
 
 internal class ImageAnalyzer(

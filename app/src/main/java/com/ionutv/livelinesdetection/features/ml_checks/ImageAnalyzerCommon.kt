@@ -4,9 +4,7 @@ import android.app.Application
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.ionutv.livelinesdetection.features.camera.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
@@ -17,18 +15,29 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
+import java.util.EnumSet
 
 internal open class ImageAnalyzerCommon(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
     private val detectionOption: LivelinessDetectionOption
-) : ImageAnalysis.Analyzer {
+) {
 
     private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
     private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
+    private val optionsWithMlKitClassification: Set<LivelinessDetectionOption> = EnumSet.of(
+        LivelinessDetectionOption.SMILE,
+        LivelinessDetectionOption.BLINK,
+        LivelinessDetectionOption.SMILE_BLINK,
+        LivelinessDetectionOption.RANDOM_EMOTION_BLINK,
+        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE,
+        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK
+    )
+
     private var isProcessing = false
     private val metricToBeUsed = MetricUsed.L2
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
+    private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
 
     protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
     val resultFlow = _resultFlow.asSharedFlow()
@@ -48,13 +57,14 @@ internal open class ImageAnalyzerCommon(
     }
 
     @ExperimentalGetImage
-    override fun analyze(image: ImageProxy) {
+    fun analyzeImage(image: ImageProxy) {
         if (isProcessing) {
             image.close()
             return
         }
         isProcessing = true
-        detectFace(image) {
+        val detectSmilingOrEyesOpen = detectionOption in optionsWithMlKitClassification
+        detectFace(image, detectSmilingOrEyesOpen){
             viewModelScope.launch {
                 when (it) {
                     is FaceDetectionResult.Error -> {
@@ -84,6 +94,8 @@ internal open class ImageAnalyzerCommon(
     }
 
     private suspend fun analyzeFace(it: FaceDetected) {
+        val croppedBitmap =
+            ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
 //        when(detectionOption){
 //            LivelinessDetectionOption.SMILE -> TODO()
 //            LivelinessDetectionOption.BLINK -> TODO()
@@ -92,11 +104,12 @@ internal open class ImageAnalyzerCommon(
 //            LivelinessDetectionOption.RANDOM_EMOTION_BLINK -> {
 //
 //            }
+//            LivelinessDetectionOption.ANGLED_FACES -> TODO()
+//            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
 //            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
 //            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK -> TODO()
 //        }
-        val croppedBitmap =
-            ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
+
         val result = emotionClassifier.classifyEmotions(croppedBitmap)
         if (result.isNotEmpty()) {
             Log.d("EMOTION_CLASSIFIER IS", result.first().toString())

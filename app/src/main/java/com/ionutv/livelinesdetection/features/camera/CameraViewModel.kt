@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.ImageAnalyzer
+import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,7 +46,9 @@ internal class CameraViewModel(
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
         .build()
         .apply {
-            setAnalyzer(application.executor, imageAnalyzer)
+            setAnalyzer(application.executor){
+                imageAnalyzer.analyzeImage(it)
+            }
         }
 
     override fun onCleared() {

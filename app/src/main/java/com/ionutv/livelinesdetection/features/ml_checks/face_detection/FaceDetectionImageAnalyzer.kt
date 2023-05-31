@@ -2,6 +2,7 @@ package com.ionutv.livelinesdetection.features.ml_checks.face_detection
 
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.os.SystemClock
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.google.mlkit.vision.common.InputImage
@@ -21,6 +22,7 @@ internal data class FaceDetected(
     val boundaries: Rect,
     val image: Bitmap,
     val headAngle: Int,
+    val processedTimeStamp: Long,
     val smiling: Boolean? = null,
     val eyesOpen: Boolean? = null,
 ) : FaceDetectionResult
@@ -28,8 +30,9 @@ internal data class FaceDetected(
 @ExperimentalGetImage
 internal fun detectFace(
     image: ImageProxy,
-    allowedFaceWidth: Float = 0.3f,
     detectSmilingOrEyesOpen: Boolean = false,
+    allowedFaceWidth: Float = 0.3f,
+    featureThreshold: Float = 0.5f,
     onFaceAnalysisResult: (FaceDetectionResult) -> Unit
 ) {
     val mediaImage = image.image
@@ -61,19 +64,14 @@ internal fun detectFace(
                 val rotationDegrees: Int = inputImage.rotationDegrees
                 val bitmapImage = ImageConvertUtils.getInstance().getUpRightBitmap(inputImage)
 
-                fun isFaceWideEnough(
-                    rotationDegrees: Int,
-                    faceWidth: Float,
-                    image: ImageProxy,
-                    allowedFaceWidth: Float
-                ): Boolean {
-                    return if (rotationDegrees == 0 || rotationDegrees == 180) {
-                        (faceWidth / image.width.toFloat() > allowedFaceWidth)
-                    } else {
-                        (faceWidth / image.height.toFloat() > allowedFaceWidth)
-                    }
-                }
-
+                val isSmiling = checkFeatureOverThreshold(face.smilingProbability, featureThreshold)
+                val areEyesOpen = checkFeatureOverThreshold(
+                    face.rightEyeOpenProbability,
+                    featureThreshold
+                ) && checkFeatureOverThreshold(
+                    face.leftEyeOpenProbability,
+                    featureThreshold
+                )
                 if (isFaceWideEnough(
                         rotationDegrees,
                         face.boundingBox.width().toFloat(),
@@ -85,7 +83,11 @@ internal fun detectFace(
                         FaceDetected(
                             face.boundingBox,
                             bitmapImage,
-                            face.headEulerAngleY.roundToInt()
+                            face.headEulerAngleY.roundToInt(),
+                            SystemClock.elapsedRealtime(),
+                            isSmiling,
+                            areEyesOpen,
+
                         )
                     )
 
@@ -102,5 +104,25 @@ internal fun detectFace(
                 // may stall.
                 image.close()
             }
+    }
+}
+
+private fun checkFeatureOverThreshold(
+    actualValue: Float?,
+    smilingThreshold: Float
+): Boolean {
+    return actualValue?.compareTo(smilingThreshold) == -1
+}
+
+private fun isFaceWideEnough(
+    rotationDegrees: Int,
+    faceWidth: Float,
+    image: ImageProxy,
+    allowedFaceWidth: Float
+): Boolean {
+    return if (rotationDegrees == 0 || rotationDegrees == 180) {
+        (faceWidth / image.width.toFloat() > allowedFaceWidth)
+    } else {
+        (faceWidth / image.height.toFloat() > allowedFaceWidth)
     }
 }
