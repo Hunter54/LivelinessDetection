@@ -1,7 +1,6 @@
 package com.ionutv.livelinesdetection.features.camera
 
 import android.app.Application
-import androidx.camera.core.CameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -22,7 +21,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
@@ -32,7 +30,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOptio
 public fun DetectionAndCameraPreview(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE
+    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.SMILE
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as Application
@@ -40,6 +38,14 @@ public fun DetectionAndCameraPreview(
         viewModel(factory = CameraViewModelFactory(application, livelinessDetectionOption))
     val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
+
+//    CameraPreviewAndFaceHighlight(
+//        modifier = modifier,
+//        cameraSelector = cameraSelector,
+//        cameraProvider = cameraProvider,
+//        imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase,
+//        classifiedFace = faceImage
+//    )
 
     PreviewAndUserGuidance(
         modifier = modifier,

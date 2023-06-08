@@ -43,7 +43,7 @@ internal abstract class ImageClassifierService constructor(
     }
 
     //Retrieve labels only if path is not empty
-    protected val labels: List<String> =
+    internal val labels: List<String> =
         labelPath.takeIf { it.isNotEmpty() }?.let { FileUtil.loadLabels(context, it) } ?: listOf()
 
     protected var imageSizeX: Int

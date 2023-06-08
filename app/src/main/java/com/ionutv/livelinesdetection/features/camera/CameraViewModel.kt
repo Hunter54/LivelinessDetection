@@ -3,6 +3,7 @@ package com.ionutv.livelinesdetection.features.camera
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
@@ -16,6 +17,7 @@ import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalGetImage::class)
 internal class CameraViewModel(
@@ -29,6 +31,7 @@ internal class CameraViewModel(
             application, viewModelScope,
             detectionOption
         )
+
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
@@ -46,10 +49,18 @@ internal class CameraViewModel(
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
         .build()
         .apply {
-            setAnalyzer(application.executor){
+            setAnalyzer(application.executor) {
                 imageAnalyzer.analyzeImage(it)
             }
         }
+
+    init {
+        viewModelScope.launch {
+            imageAnalyzer.verificationState.collect {
+                Log.d("LOGGING TEST", it.toString())
+            }
+        }
+    }
 
     override fun onCleared() {
         imageAnalyzer.closeResources()

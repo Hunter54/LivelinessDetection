@@ -111,7 +111,7 @@ private fun checkFeatureOverThreshold(
     actualValue: Float?,
     smilingThreshold: Float
 ): Boolean {
-    return actualValue?.compareTo(smilingThreshold) == -1
+    return actualValue?.compareTo(smilingThreshold) == 1
 }
 
 private fun isFaceWideEnough(

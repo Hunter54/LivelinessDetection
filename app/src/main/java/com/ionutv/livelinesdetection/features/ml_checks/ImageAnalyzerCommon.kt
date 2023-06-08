@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
@@ -27,22 +29,45 @@ internal open class ImageAnalyzerCommon(
     private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
     private val optionsWithMlKitClassification: Set<LivelinessDetectionOption> = EnumSet.of(
         LivelinessDetectionOption.SMILE,
-        LivelinessDetectionOption.BLINK,
-        LivelinessDetectionOption.SMILE_BLINK,
-        LivelinessDetectionOption.RANDOM_EMOTION_BLINK,
+//        LivelinessDetectionOption.BLINK,
+//        LivelinessDetectionOption.SMILE_BLINK,
+//        LivelinessDetectionOption.RANDOM_EMOTION_BLINK,
         LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE,
-        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK
+//        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK
     )
 
     private var isProcessing = false
     private val metricToBeUsed = MetricUsed.L2
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
-    private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
 
+
+
+    private val verificationFlow = when(detectionOption){
+        LivelinessDetectionOption.SMILE -> Smile()
+        LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
+        LivelinessDetectionOption.ANGLED_FACES -> TODO()
+        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
+        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
+    }
+    internal val verificationState = verificationFlow.verificationFlowState
+
+    private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
     protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
     val resultFlow = _resultFlow.asSharedFlow()
 
     var faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
+
+    init {
+        when(detectionOption){
+            LivelinessDetectionOption.SMILE -> TODO()
+            LivelinessDetectionOption.RANDOM_EMOTION -> {
+                verificationFlow
+            }
+            LivelinessDetectionOption.ANGLED_FACES -> TODO()
+            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
+            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
+        }
+    }
 
     fun addImageToFaceList(bitmap: Bitmap, name: String) {
         val p = ArrayList<Float>()
@@ -96,19 +121,7 @@ internal open class ImageAnalyzerCommon(
     private suspend fun analyzeFace(it: FaceDetected) {
         val croppedBitmap =
             ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
-//        when(detectionOption){
-//            LivelinessDetectionOption.SMILE -> TODO()
-//            LivelinessDetectionOption.BLINK -> TODO()
-//            LivelinessDetectionOption.RANDOM_EMOTION -> TODO()
-//            LivelinessDetectionOption.SMILE_BLINK -> TODO()
-//            LivelinessDetectionOption.RANDOM_EMOTION_BLINK -> {
-//
-//            }
-//            LivelinessDetectionOption.ANGLED_FACES -> TODO()
-//            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
-//            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
-//            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK -> TODO()
-//        }
+        verificationFlow.invokeVerificationFlow(it)
 
         val result = emotionClassifier.classifyEmotions(croppedBitmap)
         if (result.isNotEmpty()) {

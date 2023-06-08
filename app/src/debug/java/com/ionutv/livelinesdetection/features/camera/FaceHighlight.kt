@@ -1,12 +1,13 @@
 package com.ionutv.livelinesdetection.features.camera
 
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,18 +27,16 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 
 @Composable
 internal fun CameraPreviewAndFaceHighlight(
     cameraSelector: CameraSelector,
-    cameraViewModel: CameraViewModel,
+    cameraProvider: ProcessCameraProvider?,
+    imageAnalysisUseCase: ImageAnalysis,
     classifiedFace: FaceClassifierResult,
     modifier: Modifier = Modifier,
 ) {
-
-    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     key(cameraProvider) {
@@ -51,7 +50,7 @@ internal fun CameraPreviewAndFaceHighlight(
                             lifecycleOwner,
                             cameraSelector,
                             it,
-                            cameraViewModel.imageAnalysisUseCase
+                            imageAnalysisUseCase
                         )
                     }
                 })
