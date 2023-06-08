@@ -84,6 +84,7 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+    implementation("io.github.nsk90:kstatemachine-coroutines-jvm:0.22.1")
     implementation("org.tensorflow:tensorflow-lite:0.0.0-nightly-SNAPSHOT")
     // The GPU delegate library is optional. Depend on it as needed.
     implementation("org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly-SNAPSHOT")

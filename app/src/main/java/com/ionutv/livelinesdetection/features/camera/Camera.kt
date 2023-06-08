@@ -1,7 +1,10 @@
 package com.ionutv.livelinesdetection.features.camera
 
 import android.app.Application
+import androidx.camera.core.CameraProvider
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,23 +39,25 @@ public fun DetectionAndCameraPreview(
     val cameraViewModel: CameraViewModel =
         viewModel(factory = CameraViewModelFactory(application, livelinessDetectionOption))
     val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
+    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
 
     PreviewAndUserGuidance(
         modifier = modifier,
         userState = UserState.START,
         cameraSelector = cameraSelector,
-        cameraViewModel = cameraViewModel,
+        cameraProvider = cameraProvider,
+        imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase
     )
 }
 
 @Composable
 internal fun PreviewAndUserGuidance(
     cameraSelector: CameraSelector,
-    cameraViewModel: CameraViewModel,
     userState: UserState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    cameraProvider: ProcessCameraProvider?,
+    imageAnalysisUseCase: ImageAnalysis
 ) {
-    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     key(cameraProvider) {
         Box(modifier = modifier.fillMaxSize()) {
@@ -64,33 +69,35 @@ internal fun PreviewAndUserGuidance(
                         lifecycleOwner,
                         cameraSelector,
                         it,
-                        cameraViewModel.imageAnalysisUseCase
+                        imageAnalysisUseCase
                     )
                 }
-            }, modifier = Modifier.fillMaxSize().drawWithContent {
+            }, modifier = Modifier
+                .fillMaxSize()
+                .drawWithContent {
 
-                val ovalWidth = size.width / 1.8f
-                val ovalHeight = size.height / 2.3f
-                val ovalX = size.width / 2f - ovalWidth / 2f
-                val ovalY = size.height / 2f - ovalHeight / 2f
+                    val ovalWidth = size.width / 1.8f
+                    val ovalHeight = size.height / 2.3f
+                    val ovalX = size.width / 2f - ovalWidth / 2f
+                    val ovalY = size.height / 2f - ovalHeight / 2f
 
-                drawContent()
+                    drawContent()
 
-                drawRect(Color(0x99000000))
-                drawOval(
-                    Color.Transparent,
-                    size = Size(width = ovalWidth, height = ovalHeight),
-                    topLeft = Offset(x = ovalX, y = ovalY),
-                    blendMode = BlendMode.SrcIn
-                )
-                drawOval(
-                    Color.Gray,
-                    size = Size(width = ovalWidth, height = ovalHeight),
-                    topLeft = Offset(x = ovalX, y = ovalY),
-                    style = Stroke(width = 2.dp.toPx())
-                )
+                    drawRect(Color(0x99000000))
+                    drawOval(
+                        Color.Transparent,
+                        size = Size(width = ovalWidth, height = ovalHeight),
+                        topLeft = Offset(x = ovalX, y = ovalY),
+                        blendMode = BlendMode.SrcIn
+                    )
+                    drawOval(
+                        Color.Gray,
+                        size = Size(width = ovalWidth, height = ovalHeight),
+                        topLeft = Offset(x = ovalX, y = ovalY),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
 
-            })
+                })
             Canvas(modifier = modifier.fillMaxSize()) {
                 when(userState){
                     UserState.END -> TODO()
