@@ -7,9 +7,10 @@ import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOptio
 
 internal class CameraViewModelFactory(
     private val application: Application,
-    private val livelinessDetectionOption: LivelinessDetectionOption
+    private val livelinessDetectionOption: LivelinessDetectionOption,
+    private val isDebugMode: Boolean
 ) :
     ViewModelProvider.NewInstanceFactory() {
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        CameraViewModel(application, livelinessDetectionOption) as T
+        CameraViewModel(application, livelinessDetectionOption, isDebugMode) as T
 }

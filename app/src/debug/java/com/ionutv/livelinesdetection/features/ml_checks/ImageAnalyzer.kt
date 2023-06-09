@@ -9,7 +9,8 @@ internal class ImageAnalyzer(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
     private val detectionOption: LivelinessDetectionOption
-) : ImageAnalyzerCommon(application, viewModelScope, detectionOption) {
+    private val isDebugMode: Boolean
+) : ImageAnalyzerCommon(application, viewModelScope, detectionOption, isDebugMode) {
 
     init {
         setupFaceRecognitionExistingFaces(application)

@@ -4,7 +4,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetec
 import kotlinx.coroutines.flow.StateFlow
 internal sealed class VerificationState{
     object Start : VerificationState()
-    object Working : VerificationState()
+    data class Working(val message : String) : VerificationState()
     object Finished : VerificationState()
     data class Error(val message: String): VerificationState()
 }

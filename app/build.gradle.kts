@@ -2,7 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    alias(libs.plugins.google.hilt)
+//    alias(libs.plugins.google.hilt)
     alias(libs.plugins.kotlin.kapt)
 }
 
@@ -67,7 +67,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.google.mlkit.face)
     implementation(libs.bundles.androidx.lifecycle)
-    implementation(libs.bundles.hilt)
+//    implementation(libs.bundles.hilt)
     implementation(libs.bundles.camerax)
     implementation(libs.accompanist.permissions)
     implementation(libs.kotlinx.coroutines.android)
@@ -84,7 +84,7 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
-    implementation("io.github.nsk90:kstatemachine-coroutines-jvm:0.22.1")
+    implementation("com.tinder.statemachine:statemachine:0.2.0")
     implementation("org.tensorflow:tensorflow-lite:0.0.0-nightly-SNAPSHOT")
     // The GPU delegate library is optional. Depend on it as needed.
     implementation("org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly-SNAPSHOT")

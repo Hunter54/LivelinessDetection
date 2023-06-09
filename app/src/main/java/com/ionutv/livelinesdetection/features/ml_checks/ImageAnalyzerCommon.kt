@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFaces
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
@@ -22,7 +23,8 @@ import java.util.EnumSet
 internal open class ImageAnalyzerCommon(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
-    private val detectionOption: LivelinessDetectionOption
+    private val detectionOption: LivelinessDetectionOption,
+    private val debugMode: Boolean
 ) {
 
     private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
@@ -41,11 +43,10 @@ internal open class ImageAnalyzerCommon(
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
 
 
-
-    private val verificationFlow = when(detectionOption){
+    private val verificationFlow = when (detectionOption) {
         LivelinessDetectionOption.SMILE -> Smile()
         LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
-        LivelinessDetectionOption.ANGLED_FACES -> TODO()
+        LivelinessDetectionOption.ANGLED_FACES -> AngledFaces()
         LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
         LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
     }
@@ -57,17 +58,17 @@ internal open class ImageAnalyzerCommon(
 
     var faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
 
-    init {
-        when(detectionOption){
-            LivelinessDetectionOption.SMILE -> TODO()
-            LivelinessDetectionOption.RANDOM_EMOTION -> {
-                verificationFlow
-            }
-            LivelinessDetectionOption.ANGLED_FACES -> TODO()
-            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
-            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
-        }
-    }
+//    init {
+//        when(detectionOption){
+//            LivelinessDetectionOption.SMILE -> TODO()
+//            LivelinessDetectionOption.RANDOM_EMOTION -> {
+//                verificationFlow
+//            }
+//            LivelinessDetectionOption.ANGLED_FACES -> TODO()
+//            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
+//            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
+//        }
+//    }
 
     fun addImageToFaceList(bitmap: Bitmap, name: String) {
         val p = ArrayList<Float>()
@@ -89,7 +90,7 @@ internal open class ImageAnalyzerCommon(
         }
         isProcessing = true
         val detectSmilingOrEyesOpen = detectionOption in optionsWithMlKitClassification
-        detectFace(image, detectSmilingOrEyesOpen){
+        detectFace(image, detectSmilingOrEyesOpen) {
             viewModelScope.launch {
                 when (it) {
                     is FaceDetectionResult.Error -> {
@@ -119,26 +120,28 @@ internal open class ImageAnalyzerCommon(
     }
 
     private suspend fun analyzeFace(it: FaceDetected) {
-        val croppedBitmap =
-            ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
-        verificationFlow.invokeVerificationFlow(it)
-
-        val result = emotionClassifier.classifyEmotions(croppedBitmap)
-        if (result.isNotEmpty()) {
-            Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
-        }
-        val embedding = faceNetFaceRecognition.processImage(croppedBitmap)
-        val userName = checkFaceSimilarity(embedding)
-        _resultFlow.emit(
-            FaceClassifierResult.FaceClassified(
-                it.boundaries,
-                image = it.image,
-                croppedImage = croppedBitmap,
-                emotions = result,
-                name = userName,
-                faceAngle = it.headAngle
+        if (!debugMode) {
+            verificationFlow.invokeVerificationFlow(it)
+        } else {
+            val croppedBitmap =
+                ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
+            val result = emotionClassifier.classifyEmotions(croppedBitmap)
+            if (result.isNotEmpty()) {
+                Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
+            }
+            val embedding = faceNetFaceRecognition.processImage(croppedBitmap)
+            val userName = checkFaceSimilarity(embedding)
+            _resultFlow.emit(
+                FaceClassifierResult.FaceClassified(
+                    it.boundaries,
+                    image = it.image,
+                    croppedImage = croppedBitmap,
+                    emotions = result,
+                    name = userName,
+                    faceAngle = it.headAngle
+                )
             )
-        )
+        }
     }
 
     private fun checkFaceSimilarity(embedding: TensorBuffer): String {

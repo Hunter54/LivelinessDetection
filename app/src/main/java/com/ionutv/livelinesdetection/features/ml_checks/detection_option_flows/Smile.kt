@@ -37,7 +37,7 @@ internal class Smile : VerificationFlow {
         state<State.Start> {
             on<Event.Start> {
                 _verificationStateFlow.update {
-                    VerificationState.Working
+                    VerificationState.Working("Please try to smile")
                 }
                 transitionTo(State.Detecting)
             }

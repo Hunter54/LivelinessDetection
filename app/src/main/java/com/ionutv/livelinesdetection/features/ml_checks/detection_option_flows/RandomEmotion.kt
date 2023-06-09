@@ -41,12 +41,12 @@ internal class RandomEmotion(private val emotionClassifier: EmotionImageClassifi
         initialState(State.Start)
         state<State.Start> {
             on<Event.Start> {
-                transitionTo(State.Detecting)
+                transitionTo(State.Detecting, SideEffect.Detecting)
             }
         }
         state<State.Detecting> {
             on<Event.Detected> {
-                transitionTo(State.Detected)
+                transitionTo(State.Detected, SideEffect.Detected)
             }
         }
         state<State.Detected> {
@@ -59,11 +59,12 @@ internal class RandomEmotion(private val emotionClassifier: EmotionImageClassifi
             when (validTransition.sideEffect) {
                 SideEffect.Detecting -> {
                     _verificationStateFlow.update {
-                        VerificationState.Working
+                        VerificationState.Working("Please try to be $emotionToDetect")
                     }
                 }
 
                 SideEffect.Detected -> {
+                    validTransition.toState
                     _verificationStateFlow.update {
                         VerificationState.Finished
                     }
@@ -82,8 +83,8 @@ internal class RandomEmotion(private val emotionClassifier: EmotionImageClassifi
     override suspend fun invokeVerificationFlow(face: FaceDetected) {
         val croppedBitmap =
             ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
-        val result = emotionClassifier.classifyEmotions(croppedBitmap)
-        if (result.first().title == emotionToDetect) {
+        val result = emotionClassifier.classifyEmotions(croppedBitmap).first()
+        if (result.title == emotionToDetect && result.confidence > 0.5f) {
             machine.transition(Event.Detected)
         }
     }
