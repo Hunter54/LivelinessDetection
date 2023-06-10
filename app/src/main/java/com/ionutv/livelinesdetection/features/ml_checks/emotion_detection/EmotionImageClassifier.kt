@@ -44,7 +44,7 @@ internal class EmotionImageClassifier(
     fun classifyEmotions(bitmap: Bitmap): List<ClassifierResult> =
         getProbabilityFromOutput(processImage(bitmap))
 
-    fun getProbabilityFromOutput(probabilityBuffer: TensorBuffer): List<ClassifierResult> {
+    private fun getProbabilityFromOutput(probabilityBuffer: TensorBuffer): List<ClassifierResult> {
         val labeledProbability = TensorLabel(
             labels,
             probabilityProcessor.process(probabilityBuffer)

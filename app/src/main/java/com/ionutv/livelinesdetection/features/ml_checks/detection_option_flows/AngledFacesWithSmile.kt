@@ -2,6 +2,7 @@ package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
 import android.util.Log
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
+import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.tinder.StateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,11 +18,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlin.random.Random
 
-internal class AngledFacesWithSmile : VerificationFlow {
+internal class AngledFacesWithSmile(faceRecognition: FaceNetFaceRecognition) : VerificationFlow {
 
     val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val smileFlow = Smile()
-    private val angledFacesFlow = AngledFaces()
+    private val angledFacesFlow = AngledFaces(faceRecognition)
 
     private sealed class State() {
         object Start : State()

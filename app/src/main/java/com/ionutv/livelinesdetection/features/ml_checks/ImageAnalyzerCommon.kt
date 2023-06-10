@@ -40,15 +40,15 @@ internal open class ImageAnalyzerCommon(
     )
 
     private var isProcessing = false
-    private val metricToBeUsed = MetricUsed.L2
+    private val metricToBeUsed = FaceNetFaceRecognition.MetricUsed.L2
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
 
 
     private val verificationFlow = when (detectionOption) {
         LivelinessDetectionOption.SMILE -> Smile()
         LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
-        LivelinessDetectionOption.ANGLED_FACES -> AngledFaces()
-        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile()
+        LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
+        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(faceNetFaceRecognition)
         LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
     }
     internal val verificationState = verificationFlow.verificationFlowState
@@ -115,11 +115,6 @@ internal open class ImageAnalyzerCommon(
         }
     }
 
-    private enum class MetricUsed {
-        COSINE,
-        L2
-    }
-
     private suspend fun analyzeFace(it: FaceDetected) {
         if (!debugMode) {
             verificationFlow.invokeVerificationFlow(it)
@@ -152,7 +147,7 @@ internal open class ImageAnalyzerCommon(
                 // Compute the L2 norm and then append it to the ArrayList.
                 val p = ArrayList<Float>()
                 when (metricToBeUsed) {
-                    MetricUsed.COSINE -> {
+                    FaceNetFaceRecognition.MetricUsed.COSINE -> {
                         p.add(
                             FaceNetFaceRecognition.computeCosineSimilarity(
                                 subject,
@@ -161,7 +156,7 @@ internal open class ImageAnalyzerCommon(
                         )
                     }
 
-                    MetricUsed.L2 -> {
+                    FaceNetFaceRecognition.MetricUsed.L2 -> {
                         p.add(
                             FaceNetFaceRecognition.computeL2Normalisation(
                                 subject,
@@ -175,13 +170,13 @@ internal open class ImageAnalyzerCommon(
             // If this cluster exists, append the L2 norm/cosine score to it.
             else {
                 when (metricToBeUsed) {
-                    MetricUsed.COSINE -> {
+                    FaceNetFaceRecognition.MetricUsed.COSINE -> {
                         nameScoreHashmap[face.name]?.add(
                             FaceNetFaceRecognition.computeCosineSimilarity(subject, face.embedding)
                         )
                     }
 
-                    MetricUsed.L2 -> {
+                    FaceNetFaceRecognition.MetricUsed.L2 -> {
                         nameScoreHashmap[face.name]?.add(
                             FaceNetFaceRecognition.computeL2Normalisation(subject, face.embedding)
                         )
@@ -198,7 +193,7 @@ internal open class ImageAnalyzerCommon(
         nameScoreHashmap.clear()
 
         val bestScoreName = when (metricToBeUsed) {
-            MetricUsed.COSINE -> {
+            FaceNetFaceRecognition.MetricUsed.COSINE -> {
                 if (avgScores.maxOrNull()!! > 0.4f) {
                     names[avgScores.indexOf(avgScores.maxOrNull()!!)]
                 } else {
@@ -206,7 +201,7 @@ internal open class ImageAnalyzerCommon(
                 }
             }
 
-            MetricUsed.L2 -> {
+            FaceNetFaceRecognition.MetricUsed.L2 -> {
                 if (avgScores.minOrNull()!! > 10f) {
                     "Unknown"
                 } else {

@@ -30,7 +30,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOptio
 public fun DetectionAndCameraPreview(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE
+    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as Application
@@ -67,7 +67,7 @@ internal fun PreviewAndUserGuidance(
     val lifecycleOwner = LocalLifecycleOwner.current
     key(cameraProvider) {
         Box(modifier = modifier.fillMaxSize()) {
-            CameraPreview( onUseCase = {
+            CameraPreview(onUseCase = {
                 cameraProvider?.apply {
                     // Must unbind the use-cases before rebinding them.
                     unbindAll()
@@ -105,7 +105,7 @@ internal fun PreviewAndUserGuidance(
 
                 })
             Canvas(modifier = modifier.fillMaxSize()) {
-                when(userState){
+                when (userState) {
                     UserState.END -> TODO()
                     is UserState.Guiding -> TODO()
                     UserState.START -> {
