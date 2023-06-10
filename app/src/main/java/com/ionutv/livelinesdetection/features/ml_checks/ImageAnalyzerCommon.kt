@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFaces
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithSmile
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
@@ -47,7 +48,7 @@ internal open class ImageAnalyzerCommon(
         LivelinessDetectionOption.SMILE -> Smile()
         LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
         LivelinessDetectionOption.ANGLED_FACES -> AngledFaces()
-        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
+        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile()
         LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
     }
     internal val verificationState = verificationFlow.verificationFlowState

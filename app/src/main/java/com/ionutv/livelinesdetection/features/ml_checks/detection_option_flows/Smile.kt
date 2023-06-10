@@ -60,16 +60,14 @@ internal class Smile : VerificationFlow {
         }
     }
 
-    init {
-        machine.transition(Event.Start)
-    }
+
 
     override suspend fun invokeVerificationFlow(faceClassified: FaceDetected) {
+        machine.transition(Event.Start)
         if (faceClassified.smiling == true) {
             machine.transition(Event.Detected)
             Log.d("SMILE TEST", "SMILLING")
         }
-        Log.d("SMILE TEST", machine.state.toString())
     }
 
 }

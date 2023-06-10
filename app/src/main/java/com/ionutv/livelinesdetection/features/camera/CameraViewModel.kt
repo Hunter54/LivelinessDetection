@@ -59,7 +59,7 @@ internal class CameraViewModel(
     init {
         viewModelScope.launch {
             imageAnalyzer.verificationState.collect {
-                Log.d("LOGGING TEST", it.toString())
+                Log.d("VIEWMODEL TEST", it.toString())
             }
         }
     }
