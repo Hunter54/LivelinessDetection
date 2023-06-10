@@ -1,5 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
+import android.util.Log
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.tinder.StateMachine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,12 +15,14 @@ internal class AngledFaces : VerificationFlow {
         object Start : State()
         object DetectingFaceStraight : State()
         object DetectingLeftSide : State() {
-            const val requiredFaceAngle: Int = 25
-        }
-        object DetectingRightSide : State() {
             const val requiredFaceAngle: Int = -25
         }
-        object Detected : State()
+
+        object DetectingRightSide : State() {
+            const val requiredFaceAngle: Int = 25
+        }
+
+        object Finished : State()
     }
 
     private sealed class Event {
@@ -41,6 +44,13 @@ internal class AngledFaces : VerificationFlow {
             }
         }
         state<State.DetectingFaceStraight> {
+            onEnter {
+                Log.d("AngledFaces TEST", "DetectingStraight")
+                _verificationStateFlow.update {
+                    VerificationState.Working("Please look at the camera straight")
+                }
+            }
+
             on<Event.Detected> {
                 transitionTo(State.DetectingLeftSide)
             }
@@ -49,6 +59,13 @@ internal class AngledFaces : VerificationFlow {
             }
         }
         state<State.DetectingLeftSide> {
+            onEnter {
+                Log.d("AngledFaces TEST", "DetectingLeftSide")
+                _verificationStateFlow.update {
+                    VerificationState.Working("Please show left side of face")
+                }
+            }
+
             on<Event.Detected> {
                 transitionTo(State.DetectingRightSide)
             }
@@ -57,15 +74,23 @@ internal class AngledFaces : VerificationFlow {
             }
         }
         state<State.DetectingRightSide> {
+            onEnter {
+                Log.d("AngledFaces TEST", "DetectingRightSide")
+                _verificationStateFlow.update {
+                    VerificationState.Working("Please show right side of face")
+                }
+            }
             on<Event.Detected> {
-                transitionTo(State.Detected)
+                transitionTo(State.Finished)
             }
             on<Event.Reset> {
                 transitionTo(State.Start)
             }
         }
-        state<State.Detected> {
+        state<State.Finished> {
             onEnter {
+                Log.d("AngledFaces TEST", "Finished detecting")
+
                 _verificationStateFlow.update {
                     VerificationState.Finished
                 }
@@ -96,8 +121,14 @@ internal class AngledFaces : VerificationFlow {
                     machine.transition(Event.Detected)
                 }
             }
-            State.Start -> TODO()
-            State.Detected -> TODO()
+
+            State.Start -> {
+                //TODO
+            }
+
+            State.Finished -> {
+                //TODO
+            }
 
         }
     }

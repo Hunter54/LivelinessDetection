@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 internal class ImageAnalyzer(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
-    private val detectionOption: LivelinessDetectionOption
+    private val detectionOption: LivelinessDetectionOption,
     private val isDebugMode: Boolean
 ) : ImageAnalyzerCommon(application, viewModelScope, detectionOption, isDebugMode) {
 

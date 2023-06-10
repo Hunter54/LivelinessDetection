@@ -37,40 +37,31 @@ internal class RandomEmotion(private val emotionClassifier: EmotionImageClassifi
     override val verificationFlowState: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
-    private val machine = StateMachine.create<State, Event, SideEffect> {
+    private val machine = StateMachine.create<State, Event, Nothing> {
         initialState(State.Start)
         state<State.Start> {
             on<Event.Start> {
-                transitionTo(State.Detecting, SideEffect.Detecting)
+                transitionTo(State.Detecting)
             }
         }
         state<State.Detecting> {
-            on<Event.Detected> {
-                transitionTo(State.Detected, SideEffect.Detected)
+            onEnter {
+                Log.d("RandomEmotion TEST", "Detecting")
+                _verificationStateFlow.update {
+                    VerificationState.Working("Please try to be $emotionToDetect")
+                }
             }
+            on<Event.Detected> {
+                transitionTo(State.Detected)
+            }
+
         }
         state<State.Detected> {
             onEnter {
-                Log.d("LOGGING TEST", "Detected")
-            }
-        }
-        onTransition {
-            val validTransition = it as? StateMachine.Transition.Valid ?: return@onTransition
-            when (validTransition.sideEffect) {
-                SideEffect.Detecting -> {
-                    _verificationStateFlow.update {
-                        VerificationState.Working("Please try to be $emotionToDetect")
-                    }
+                Log.d("RandomEmotion TEST", "Detected")
+                _verificationStateFlow.update {
+                    VerificationState.Finished
                 }
-
-                SideEffect.Detected -> {
-                    validTransition.toState
-                    _verificationStateFlow.update {
-                        VerificationState.Finished
-                    }
-                }
-
-                null -> {}
             }
         }
 

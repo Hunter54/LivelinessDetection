@@ -32,31 +32,31 @@ internal class Smile : VerificationFlow {
     override val verificationFlowState: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
-    private val machine = StateMachine.create<State,Event,Nothing> {
+    private val machine = StateMachine.create<State, Event, Nothing> {
         initialState(State.Start)
         state<State.Start> {
             on<Event.Start> {
-                _verificationStateFlow.update {
-                    VerificationState.Working("Please try to smile")
-                }
                 transitionTo(State.Detecting)
             }
         }
         state<State.Detecting> {
-            on<Event.Detected> {
+            onEnter {
+                Log.d("SMILE TEST", "Detecting smile")
                 _verificationStateFlow.update {
-                    VerificationState.Finished
+                    VerificationState.Working("Please try to smile")
                 }
+            }
+            on<Event.Detected> {
                 transitionTo(State.Detected)
             }
         }
         state<State.Detected> {
             onEnter {
-                Log.d("LOGGING TEST", "Detected")
+                _verificationStateFlow.update {
+                    VerificationState.Finished
+                }
+                Log.d("SMILE TEST", "Detected smile")
             }
-        }
-        onTransition {
-            val validTransition = it as? StateMachine.Transition.Valid ?: return@onTransition
         }
     }
 
@@ -67,9 +67,9 @@ internal class Smile : VerificationFlow {
     override suspend fun invokeVerificationFlow(faceClassified: FaceDetected) {
         if (faceClassified.smiling == true) {
             machine.transition(Event.Detected)
-            Log.d("LOGGING TEST", "SMILLING")
+            Log.d("SMILE TEST", "SMILLING")
         }
-        Log.d("LOGGING TEST", machine.state.toString())
+        Log.d("SMILE TEST", machine.state.toString())
     }
 
 }
