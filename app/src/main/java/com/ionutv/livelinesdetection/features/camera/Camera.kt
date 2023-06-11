@@ -32,23 +32,21 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 
 @Composable
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
-public fun DetectionAndCameraPreview(
+internal fun DetectionAndCameraPreview(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES
+    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES,
+    cameraViewModel: CameraViewModel
 ) {
     Log.d("COMPOSE TEST", "detection and preview recomposed")
     val context = LocalContext.current
     val application = context.applicationContext as Application
-    val cameraViewModel: CameraViewModel =
-        viewModel(factory = CameraViewModelFactory(application, livelinessDetectionOption, false))
     val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
     val verificationState by cameraViewModel.verificationState.collectAsState()
