@@ -14,9 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.math.absoluteValue
 
-internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) : VerificationFlow {
+internal class AngledFaces(
+    private val faceRecognition: FaceNetFaceRecognition,
+    private val shouldCheckFaceSimilarity: Boolean = true
+) : VerificationFlow {
 
-    private sealed class State() {
+    private sealed class State {
         object Start : State()
         object DetectingFaceStraight : State()
         object DetectingLeftSide : State() {
@@ -32,7 +35,8 @@ internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) 
         object Finished : State()
     }
 
-    private val faceList: MutableList<Bitmap> = mutableListOf()
+    private val _faceList = mutableListOf<Bitmap>()
+    override val faceList: List<Bitmap> get() = _faceList.toList()
 
     private sealed class Event {
         object Start : Event()
@@ -91,7 +95,9 @@ internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) 
                 }
             }
             on<Event.Detected> {
-                transitionTo(State.CheckAreAllImagesSame)
+                if (shouldCheckFaceSimilarity)
+                    transitionTo(State.CheckAreAllImagesSame)
+                else transitionTo(State.Finished)
             }
             on<Event.Reset> {
                 transitionTo(State.Start)
@@ -116,6 +122,7 @@ internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) 
         }
         state<State.Error> {
             onEnter {
+                Log.d("AngledFaces TEST", "Error different persons")
                 _verificationStateFlow.update {
                     VerificationState.Error("Different person in at least one of the images")
                 }
@@ -124,7 +131,6 @@ internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) 
         state<State.Finished> {
             onEnter {
                 Log.d("AngledFaces TEST", "Finished detecting")
-
                 _verificationStateFlow.update {
                     VerificationState.Finished
                 }
@@ -132,66 +138,59 @@ internal class AngledFaces(private val faceRecognition: FaceNetFaceRecognition) 
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun invokeVerificationFlow(face: FaceDetected) {
         machine.transition(Event.Start)
         when (val state = machine.state) {
             is State.DetectingFaceStraight -> {
                 if (face.headAngle.absoluteValue < 5) {
-                    val croppedBitmap =
-                        ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
-                    faceList.add(croppedBitmap)
-                    machine.transition(Event.Detected)
+                    performStateTransition(face)
                 }
             }
 
             is State.DetectingLeftSide -> {
                 if (face.headAngle in (state.requiredFaceAngle - 5)..state.requiredFaceAngle + 5) {
-                    val croppedBitmap =
-                        ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
-                    faceList.add(croppedBitmap)
-                    machine.transition(Event.Detected)
+                    performStateTransition(face)
                 }
             }
 
             is State.DetectingRightSide -> {
                 if (face.headAngle in (state.requiredFaceAngle - 5)..state.requiredFaceAngle + 5) {
-                    val croppedBitmap =
-                        ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
-                    faceList.add(croppedBitmap)
-                    machine.transition(Event.Detected)
+                    performStateTransition(face)
                 }
             }
 
             is State.CheckAreAllImagesSame -> {
-                val processedImages = faceList.map {
-                    faceRecognition.getImageProcessing(it)
-                }
-                val isDifferentPersonInList = elementPairs(processedImages).map {
-                    isImageSamePerson(FaceNetFaceRecognition.MetricUsed.L2, it)
-                }.any {
-                    !it
-                }
-                if (isDifferentPersonInList) {
-                    machine.transition(Event.Error)
-                } else {
+                if (checkAreAllImagesSamePerson()) {
                     machine.transition(Event.Detected)
+                } else {
+                    machine.transition(Event.Error)
                 }
             }
 
-            State.Start -> {
+
+            else -> {
                 //TODO
             }
-
-            State.Error -> {
-                //TODO
-            }
-
-            State.Finished -> {
-                //TODO
-            }
-
         }
+    }
+
+    private fun checkAreAllImagesSamePerson(): Boolean {
+        val processedImages = faceList.map {
+            faceRecognition.getImageProcessing(it)
+        }
+        val isDifferentPersonInList = elementPairs(processedImages).map {
+            isImageSamePerson(FaceNetFaceRecognition.MetricUsed.L2, it)
+        }.any {
+            !it
+        }
+        return !isDifferentPersonInList
+    }
+
+    private fun performStateTransition(face: FaceDetected) {
+        val croppedBitmap =
+            ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
+        _faceList.add(croppedBitmap)
+        machine.transition(Event.Detected)
     }
 }
 

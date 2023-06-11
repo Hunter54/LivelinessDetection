@@ -1,6 +1,8 @@
 package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
+import android.graphics.Bitmap
 import android.util.Log
+import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.tinder.StateMachine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,9 @@ internal class Smile : VerificationFlow {
         object Start : Event()
         object Detected : Event()
     }
+
+    private val _faceList = mutableListOf<Bitmap>()
+    override val faceList: List<Bitmap> get() = _faceList.toList()
 
     private val _verificationStateFlow =
         MutableStateFlow<VerificationState>(VerificationState.Start)
@@ -61,10 +66,12 @@ internal class Smile : VerificationFlow {
     }
 
 
-
-    override suspend fun invokeVerificationFlow(faceClassified: FaceDetected) {
+    override suspend fun invokeVerificationFlow(face: FaceDetected) {
         machine.transition(Event.Start)
-        if (faceClassified.smiling == true) {
+        if (face.smiling == true) {
+            val croppedBitmap =
+                ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
+            _faceList.add(croppedBitmap)
             machine.transition(Event.Detected)
             Log.d("SMILE TEST", "SMILLING")
         }

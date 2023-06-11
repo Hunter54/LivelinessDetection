@@ -1,5 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
+import android.graphics.Bitmap
 import android.util.Log
 import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
@@ -29,6 +30,9 @@ internal class RandomEmotion(private val emotionClassifier: EmotionImageClassifi
         object Start : Event()
         object Detected : Event()
     }
+
+    private val _faceList = mutableListOf<Bitmap>()
+    override val faceList: List<Bitmap> get() = _faceList.toList()
 
     private val emotionToDetect = emotionClassifier.labels.random()
 

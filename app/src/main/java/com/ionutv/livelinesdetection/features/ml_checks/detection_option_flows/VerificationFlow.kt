@@ -1,5 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
+import android.graphics.Bitmap
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import kotlinx.coroutines.flow.StateFlow
 internal sealed class VerificationState{
@@ -9,7 +10,7 @@ internal sealed class VerificationState{
     data class Error(val message: String): VerificationState()
 }
 internal interface VerificationFlow {
-
+    val faceList : List<Bitmap>
     val verificationFlowState : StateFlow<VerificationState>
     suspend fun invokeVerificationFlow(face: FaceDetected)
 }

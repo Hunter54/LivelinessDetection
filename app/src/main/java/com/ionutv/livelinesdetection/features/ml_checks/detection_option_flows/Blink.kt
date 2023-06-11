@@ -1,5 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
+import android.graphics.Bitmap
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.tinder.StateMachine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,8 @@ internal class Blink : VerificationFlow {
     private val currentDetectState =
         MutableStateFlow<DetectStates>(DetectStates.WaitingInitialEyesOpen)
 
-
+    private val _faceList = mutableListOf<Bitmap>()
+    override val faceList: List<Bitmap> get() = _faceList.toList()
     private val _verificationStateFlow =
         MutableStateFlow<VerificationState>(VerificationState.Start)
     override val verificationFlowState: StateFlow<VerificationState> =

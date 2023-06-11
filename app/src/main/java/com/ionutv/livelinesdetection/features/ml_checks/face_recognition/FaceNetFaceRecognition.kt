@@ -44,6 +44,8 @@ internal class FaceNetFaceRecognition(context: Context) : ImageClassifierService
                 val similarity = computeCosineSimilarity(
                     imagePair.first, imagePair.second
                 )
+                Log.d("DIFFERENCE TEST", "SIMILARITY : $similarity")
+
                 similarity <= 0.4f
             }
 
