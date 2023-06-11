@@ -34,7 +34,7 @@ internal class Smile : VerificationFlow {
 
     private val _verificationStateFlow =
         MutableStateFlow<VerificationState>(VerificationState.Start)
-    override val verificationFlowState: StateFlow<VerificationState> =
+    override val verificationStateFlow: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
     private val machine = StateMachine.create<State, Event, Nothing> {

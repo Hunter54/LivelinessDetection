@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFaces
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithRandomEmotion
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithSmile
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
@@ -48,10 +49,15 @@ internal open class ImageAnalyzerCommon(
         LivelinessDetectionOption.SMILE -> Smile()
         LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
         LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
-        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(faceNetFaceRecognition)
-        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
+        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(
+            faceNetFaceRecognition
+        )
+        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomEmotion(
+            emotionClassifier,
+            faceNetFaceRecognition
+        )
     }
-    internal val verificationState = verificationFlow.verificationFlowState
+    internal val verificationState = verificationFlow.verificationStateFlow
 
     private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
     protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()

@@ -39,7 +39,7 @@ internal class Blink : VerificationFlow {
     override val faceList: List<Bitmap> get() = _faceList.toList()
     private val _verificationStateFlow =
         MutableStateFlow<VerificationState>(VerificationState.Start)
-    override val verificationFlowState: StateFlow<VerificationState> =
+    override val verificationStateFlow: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
     override fun initialise() {

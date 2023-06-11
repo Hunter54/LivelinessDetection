@@ -8,9 +8,6 @@ import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetec
 import com.ionutv.livelinesdetection.utils.emptyString
 import com.ionutv.livelinesdetection.utils.popOrNull
 import com.tinder.StateMachine
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,20 +15,19 @@ import kotlinx.coroutines.flow.update
 
 internal class RandomEmotion(
     private val emotionClassifier: EmotionImageClassifier,
-    private val emotionsNumberToDetect: Int = 2
+    emotionsNumberToDetect: Int = 2
 ) : VerificationFlow {
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val emotionsNumber: Int
+
+    init {
+        emotionsNumber = emotionsNumberToDetect.coerceIn(1..emotionClassifier.labels.size)
+    }
 
     private sealed class State {
         object Start : State()
         object Detecting : State()
         object Detected : State()
-    }
-
-    private sealed class SideEffect {
-        object Detecting : SideEffect()
-        object Detected : SideEffect()
     }
 
     private sealed class Event {
@@ -54,7 +50,7 @@ internal class RandomEmotion(
 
     private val _verificationStateFlow =
         MutableStateFlow<VerificationState>(VerificationState.Start)
-    override val verificationFlowState: StateFlow<VerificationState> =
+    override val verificationStateFlow: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
     private var emotionToDetect: String? = emptyString()
@@ -70,8 +66,10 @@ internal class RandomEmotion(
             onEnter {
                 emotionToDetect = emotionsToDetect.popOrNull()
                 Log.d("RandomEmotion TEST", "Detecting")
-                _verificationStateFlow.update {
-                    VerificationState.Working("Please try to be $emotionToDetect")
+                emotionToDetect?.let { emotion ->
+                    _verificationStateFlow.update {
+                        VerificationState.Working("Please try to be $emotion")
+                    }
                 }
             }
             on<Event.Detected> {
@@ -107,6 +105,7 @@ internal class RandomEmotion(
             val result = emotionClassifier.classifyEmotions(croppedBitmap).first()
             if (result.title == emotionToDetect && result.confidence > 0.5f) {
                 machine.transition(Event.Detected)
+                _faceList.add(croppedBitmap)
             }
         }
     }

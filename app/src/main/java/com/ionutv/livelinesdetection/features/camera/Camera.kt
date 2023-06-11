@@ -30,7 +30,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOptio
 public fun DetectionAndCameraPreview(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.RANDOM_EMOTION
+    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as Application

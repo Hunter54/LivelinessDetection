@@ -2,6 +2,7 @@ package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
 import android.graphics.Bitmap
 import android.util.Log
+import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.ionutv.livelinesdetection.utils.elementPairs
@@ -20,16 +21,18 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlin.random.Random
 
-internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceRecognition) :
-    VerificationFlow {
+internal class AngledFacesWithRandomEmotion(
+    private val emotionRecognition: EmotionImageClassifier,
+    private val faceRecognition: FaceNetFaceRecognition
+) : VerificationFlow {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val smileFlow = Smile()
     private val angledFacesFlow = AngledFaces(faceRecognition, false)
+    private val emotionFlow = RandomEmotion(emotionRecognition)
 
     private sealed class State {
         object Start : State()
-        object DetectSmile : State()
+        object DetectEmotions : State()
         object DetectAngledFaces : State()
         object CheckAreAllImagesSamePerson : State()
         object Error : State()
@@ -38,58 +41,58 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
 
     private sealed class Event {
         object Start : Event()
-        object DetectSmile : Event()
+        object DetectEmotions : Event()
         object DetectAngledFaces : Event()
         object Error : Event()
         object Finish : Event()
         object Reset : Event()
     }
 
+
     private val _faceList = mutableListOf<Bitmap>()
     override val faceList: List<Bitmap> get() = _faceList.toList()
 
-    private val _verificationStateFlow =
-        MutableStateFlow<VerificationState>(VerificationState.Start)
+    private val _verificationStateFlow: MutableStateFlow<VerificationState> =
+        MutableStateFlow(VerificationState.Start)
     override val verificationStateFlow: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
 
-
     private val machine = StateMachine.create<State, Event, Nothing> {
         initialState(State.Start)
-        state<State.Start> {
-            on<Event.DetectSmile> {
-                transitionTo(State.DetectSmile)
+        state<State.Start>{
+            on<Event.DetectEmotions> {
+                transitionTo(State.DetectEmotions)
             }
             on<Event.DetectAngledFaces> {
                 transitionTo(State.DetectAngledFaces)
             }
         }
         state<State.DetectAngledFaces> {
-            on<Event.DetectSmile> {
-                if (smileFlow.verificationStateFlow.value == VerificationState.Finished)
+            on<Event.DetectEmotions> {
+                if (emotionFlow.verificationStateFlow.value == VerificationState.Finished)
                     transitionTo(State.CheckAreAllImagesSamePerson)
-                else transitionTo(State.DetectSmile)
+                else transitionTo(State.DetectEmotions)
             }
             onEnter {
                 angledFacesFlow.initialise()
-                Log.d("Angled and smile TEST", "Detecting Angled Faces")
+                Log.d("Angled and emotions TEST", "Detecting Angled Faces")
             }
         }
-        state<State.DetectSmile> {
+        state<State.DetectEmotions> {
             on<Event.DetectAngledFaces> {
                 if (angledFacesFlow.verificationStateFlow.value == VerificationState.Finished)
                     transitionTo(State.CheckAreAllImagesSamePerson)
                 else transitionTo(State.DetectAngledFaces)
             }
             onEnter {
-                smileFlow.initialise()
-                Log.d("Angled and smile TEST", "Detecting Smiles")
+                emotionFlow.initialise()
+                Log.d("Angled and emotions TEST", "Detecting Emotions")
 
             }
         }
         state<State.CheckAreAllImagesSamePerson> {
             onEnter {
-                Log.d("Angled and smile TEST", "Checking face similarity")
+                Log.d("Angled and emotions TEST", "Checking face similarity")
                 _verificationStateFlow.update {
                     VerificationState.Working("Please wait for additional checks")
                 }
@@ -103,7 +106,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
         }
         state<State.Error> {
             onEnter {
-                Log.d("Angled and smile TEST", "Error different persons")
+                Log.d("Angled and emotions TEST", "Error different persons")
                 _verificationStateFlow.update {
                     VerificationState.Error("Different person in at least one of the images")
                 }
@@ -111,7 +114,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
         }
         state<State.Finished> {
             onEnter {
-                Log.d("Angled and smile TEST", "Finished")
+                Log.d("Angled and emotions TEST", "Finished")
                 _verificationStateFlow.update {
                     VerificationState.Finished
                 }
@@ -120,13 +123,13 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
     }
 
     override fun initialise() {
-        val shouldStartWithSmile = Random.nextBoolean()
-        if (shouldStartWithSmile) {
-            machine.transition(Event.DetectSmile)
+        val shouldStartWithEmotions = Random.nextBoolean()
+        if (shouldStartWithEmotions) {
+            machine.transition(Event.DetectEmotions)
         } else {
             machine.transition(Event.DetectAngledFaces)
         }
-        merge(smileFlow.verificationStateFlow, angledFacesFlow.verificationStateFlow).filter {
+        merge(emotionFlow.verificationStateFlow, angledFacesFlow.verificationStateFlow).filter {
             it is VerificationState.Working || it is VerificationState.Error
         }.onEach { verificationState ->
             _verificationStateFlow.update {
@@ -136,42 +139,37 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
     }
 
     override suspend fun invokeVerificationFlow(face: FaceDetected) {
-        when (machine.state) {
+        when(machine.state){
             State.DetectAngledFaces -> {
                 angledFacesFlow.invokeVerificationFlow(face)
                 if (angledFacesFlow.verificationStateFlow.value == VerificationState.Finished)
-                    machine.transition(Event.DetectSmile)
+                    machine.transition(Event.DetectEmotions)
             }
-
-            State.DetectSmile -> {
-                smileFlow.invokeVerificationFlow(face)
-                if (smileFlow.verificationStateFlow.value == VerificationState.Finished)
+            State.DetectEmotions -> {
+                emotionFlow.invokeVerificationFlow(face)
+                if (emotionFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectAngledFaces)
             }
-
             State.CheckAreAllImagesSamePerson -> {
-                _faceList.addAll(smileFlow.faceList)
-                Log.d("Angled and smile TEST", "smile SIZE ${smileFlow.faceList.size}")
+                _faceList.addAll(emotionFlow.faceList)
+                Log.d("Angled and emotions TEST", "emotions SIZE ${emotionFlow.faceList.size}")
                 _faceList.addAll(angledFacesFlow.faceList)
-                Log.d("Angled and smile TEST", "angledFaces SIZE ${angledFacesFlow.faceList.size}")
-                Log.d("Angled and smile TEST", "LIST SIZE ${faceList.size}")
+                Log.d("Angled and emotions TEST", "angledFaces SIZE ${angledFacesFlow.faceList.size}")
+                Log.d("Angled and emotions TEST", "LIST SIZE ${faceList.size}")
                 if (areAllImagesSamePerson(faceList)) {
                     machine.transition(Event.Finish)
                 } else {
                     machine.transition(Event.Error)
                 }
             }
-
             State.Finished -> {
                 coroutineScope.cancel()
             }
+            else ->{
 
-            else -> {
-                //TODO
             }
         }
     }
-
     private fun areAllImagesSamePerson(faceList: List<Bitmap>): Boolean {
         val processedImages = faceList.map {
             faceRecognition.getImageProcessing(it)
