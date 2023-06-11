@@ -25,11 +25,9 @@ internal class AngledFaces(
         object DetectingLeftSide : State() {
             const val requiredFaceAngle: Int = -25
         }
-
         object DetectingRightSide : State() {
             const val requiredFaceAngle: Int = 25
         }
-
         object CheckAreAllImagesSame : State()
         object Error : State()
         object Finished : State()

@@ -47,7 +47,7 @@ internal open class ImageAnalyzerCommon(
 
     private val verificationFlow = when (detectionOption) {
         LivelinessDetectionOption.SMILE -> Smile()
-        LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier)
+        LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier, faceNetFaceRecognition)
         LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
         LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(
             faceNetFaceRecognition

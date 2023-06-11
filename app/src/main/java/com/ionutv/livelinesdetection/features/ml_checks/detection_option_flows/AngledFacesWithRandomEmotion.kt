@@ -28,7 +28,7 @@ internal class AngledFacesWithRandomEmotion(
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val angledFacesFlow = AngledFaces(faceRecognition, false)
-    private val emotionFlow = RandomEmotion(emotionRecognition)
+    private val emotionFlow = RandomEmotion(emotionRecognition,faceRecognition, false)
 
     private sealed class State {
         object Start : State()
