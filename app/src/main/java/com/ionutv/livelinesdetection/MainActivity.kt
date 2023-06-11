@@ -7,7 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -16,13 +19,18 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.ionutv.livelinesdetection.features.camera.DetectionAndCameraPreview
+import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.permissions.Permission
 import com.ionutv.livelinesdetection.ui.theme.LivelinesDetectionTheme
 import com.ionutv.livelinesdetection.utils.openApplicationSettings
@@ -72,7 +80,32 @@ fun MainScreen() {
                 },
                 content = {
                     Log.d("COMPOSE TEST", "calling detection and preview function")
-                    Box(Modifier.fillMaxSize()){ DetectionAndCameraPreview() }
+                    var selectedOption by remember {
+                        mutableStateOf(LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION)
+                    }
+                    Box(Modifier.fillMaxSize()) {
+                        DetectionAndCameraPreview(
+                            livelinessDetectionOption = selectedOption
+                        )
+//                        Column(
+//                            Modifier.fillMaxSize(),
+//                            verticalArrangement = Arrangement.Top,
+//                            horizontalAlignment = Alignment.CenterHorizontally
+//                        ) {
+//                            LivelinessDetectionOptionSelection(
+//                                list = listOf(
+//                                    LivelinessDetectionOption.SMILE,
+//                                    LivelinessDetectionOption.ANGLED_FACES,
+//                                    LivelinessDetectionOption.RANDOM_EMOTION
+//                                ),
+//                                onSelectedChanged = {
+//                                    selectedOption = it
+//                                },
+//                                selectedOption = selectedOption
+//                            )
+//                        }
+                    }
+
                 })
         }
     }
@@ -84,6 +117,49 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun LivelinessDetectionOptionSelection(
+    list: List<LivelinessDetectionOption>,
+    onSelectedChanged: (LivelinessDetectionOption) -> Unit,
+    selectedOption: LivelinessDetectionOption
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {
+        expanded = it
+    }) {
+        TextField(
+            modifier = Modifier.menuAnchor(),
+            readOnly = true,
+            value = selectedOption.name,
+            onValueChange = { },
+            label = { Text("Categories") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            },
+            colors = ExposedDropdownMenuDefaults.textFieldColors()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            list.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(text = selectionOption.name) },
+                    onClick = {
+                        onSelectedChanged(selectionOption)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)

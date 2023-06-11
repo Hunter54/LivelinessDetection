@@ -16,6 +16,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetec
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
@@ -90,7 +91,7 @@ internal open class ImageAnalyzerCommon(
         isProcessing = true
         val detectSmilingOrEyesOpen = detectionOption in optionsWithMlKitClassification
         detectFace(image, detectSmilingOrEyesOpen) {
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 when (it) {
                     is FaceDetectionResult.Error -> {
                         _resultFlow.emit(FaceClassifierResult.Error(it.error))
