@@ -59,17 +59,9 @@ internal open class ImageAnalyzerCommon(
 
     var faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
 
-//    init {
-//        when(detectionOption){
-//            LivelinessDetectionOption.SMILE -> TODO()
-//            LivelinessDetectionOption.RANDOM_EMOTION -> {
-//                verificationFlow
-//            }
-//            LivelinessDetectionOption.ANGLED_FACES -> TODO()
-//            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> TODO()
-//            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> TODO()
-//        }
-//    }
+    init {
+        verificationFlow.initialise()
+    }
 
     fun addImageToFaceList(bitmap: Bitmap, name: String) {
         val p = ArrayList<Float>()

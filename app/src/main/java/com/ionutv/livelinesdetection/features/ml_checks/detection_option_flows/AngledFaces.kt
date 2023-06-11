@@ -138,8 +138,11 @@ internal class AngledFaces(
         }
     }
 
-    override suspend fun invokeVerificationFlow(face: FaceDetected) {
+    override fun initialise() {
         machine.transition(Event.Start)
+    }
+
+    override suspend fun invokeVerificationFlow(face: FaceDetected) {
         when (val state = machine.state) {
             is State.DetectingFaceStraight -> {
                 if (face.headAngle.absoluteValue < 5) {

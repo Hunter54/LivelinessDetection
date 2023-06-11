@@ -12,5 +12,6 @@ internal sealed class VerificationState{
 internal interface VerificationFlow {
     val faceList : List<Bitmap>
     val verificationFlowState : StateFlow<VerificationState>
+    fun initialise()
     suspend fun invokeVerificationFlow(face: FaceDetected)
 }

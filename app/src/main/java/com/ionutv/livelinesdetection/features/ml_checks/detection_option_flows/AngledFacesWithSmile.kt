@@ -25,7 +25,6 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val smileFlow = Smile()
     private val angledFacesFlow = AngledFaces(faceRecognition, false)
-
     private sealed class State {
         object Start : State()
         object DetectSmile : State()
@@ -71,6 +70,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
                 else transitionTo(State.DetectSmile)
             }
             onEnter {
+                angledFacesFlow.initialise()
                 Log.d("Angled and smile TEST", "Detecting Angled Faces")
             }
         }
@@ -81,6 +81,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
                 else transitionTo(State.DetectAngledFaces)
             }
             onEnter {
+                smileFlow.initialise()
                 Log.d("Angled and smile TEST", "Detecting Smiles")
 
             }
@@ -117,7 +118,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
         }
     }
 
-    init {
+    override fun initialise() {
         val shouldStartWithSmile = Random.nextBoolean()
         if (shouldStartWithSmile) {
             machine.transition(Event.DetectSmile)
