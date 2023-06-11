@@ -6,6 +6,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
+import com.ionutv.livelinesdetection.utils.Constants
 import com.ionutv.livelinesdetection.utils.elementPairs
 import com.ionutv.livelinesdetection.utils.emptyString
 import com.ionutv.livelinesdetection.utils.popOrNull
@@ -21,6 +22,7 @@ internal class RandomEmotion(
     private val shouldCheckFaceSimilarity: Boolean = true,
     emotionsNumberToDetect: Int = 2
 ) : VerificationFlow {
+
 
     private val emotionsNumber: Int
 
@@ -137,7 +139,7 @@ internal class RandomEmotion(
                     val croppedBitmap =
                         ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
                     val result = emotionClassifier.classifyEmotions(croppedBitmap).first()
-                    if (result.title == emotionToDetect && result.confidence > 0.5f) {
+                    if (result.title == emotionToDetect && result.confidence > Constants.EMOTION_CONFIDENCE_THRESHOLD) {
                         machine.transition(Event.Detected)
                         _faceList.add(croppedBitmap)
                     }

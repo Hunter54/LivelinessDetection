@@ -6,6 +6,7 @@ import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition.Companion.isImageSamePerson
+import com.ionutv.livelinesdetection.utils.Constants
 import com.ionutv.livelinesdetection.utils.elementPairs
 import com.tinder.StateMachine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,9 +26,11 @@ internal class AngledFaces(
         object DetectingLeftSide : State() {
             const val requiredFaceAngle: Int = -25
         }
+
         object DetectingRightSide : State() {
             const val requiredFaceAngle: Int = 25
         }
+
         object CheckAreAllImagesSame : State()
         object Error : State()
         object Finished : State()
@@ -93,8 +96,7 @@ internal class AngledFaces(
                 }
             }
             on<Event.Detected> {
-                if (shouldCheckFaceSimilarity)
-                    transitionTo(State.CheckAreAllImagesSame)
+                if (shouldCheckFaceSimilarity) transitionTo(State.CheckAreAllImagesSame)
                 else transitionTo(State.Finished)
             }
             on<Event.Reset> {
@@ -149,13 +151,13 @@ internal class AngledFaces(
             }
 
             is State.DetectingLeftSide -> {
-                if (face.headAngle in (state.requiredFaceAngle - 5)..state.requiredFaceAngle + 5) {
+                if (face.headAngle in (state.requiredFaceAngle - Constants.ANGLED_FACE_RANGE)..state.requiredFaceAngle + Constants.ANGLED_FACE_RANGE) {
                     performStateTransition(face)
                 }
             }
 
             is State.DetectingRightSide -> {
-                if (face.headAngle in (state.requiredFaceAngle - 5)..state.requiredFaceAngle + 5) {
+                if (face.headAngle in (state.requiredFaceAngle - Constants.ANGLED_FACE_RANGE)..state.requiredFaceAngle + Constants.ANGLED_FACE_RANGE) {
                     performStateTransition(face)
                 }
             }
@@ -188,8 +190,7 @@ internal class AngledFaces(
     }
 
     private fun performStateTransition(face: FaceDetected) {
-        val croppedBitmap =
-            ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
+        val croppedBitmap = ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
         _faceList.add(croppedBitmap)
         machine.transition(Event.Detected)
     }

@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.ImageAnalyzer
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,6 +35,10 @@ internal class CameraViewModel(
             isDebugMode
         )
 
+    internal val verificationState = imageAnalyzer.verificationState.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily, VerificationState.Start
+    )
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
@@ -58,7 +63,7 @@ internal class CameraViewModel(
 
     init {
         viewModelScope.launch {
-            imageAnalyzer.verificationState.collect {
+            verificationState.collect {
                 Log.d("VIEWMODEL TEST", it.toString())
             }
         }

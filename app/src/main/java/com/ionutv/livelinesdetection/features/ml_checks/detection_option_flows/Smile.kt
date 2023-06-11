@@ -64,18 +64,28 @@ internal class Smile : VerificationFlow {
             }
         }
     }
+
     override fun initialise() {
         machine.transition(Event.Start)
     }
 
     override suspend fun invokeVerificationFlow(face: FaceDetected) {
-        if (face.smiling == true) {
-            val croppedBitmap =
-                ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
-            _faceList.add(croppedBitmap)
-            machine.transition(Event.Detected)
-            Log.d("SMILE TEST", "SMILLING")
+        when (machine.state) {
+            State.Detecting -> {
+                if (face.smiling == true) {
+                    val croppedBitmap =
+                        ImageClassifierService.cropBitmapExample(face.image, face.boundaries)
+                    _faceList.add(croppedBitmap)
+                    machine.transition(Event.Detected)
+                    Log.d("SMILE TEST", "SMILLING")
+                }
+            }
+
+            else -> {
+                //TODO
+            }
         }
+
     }
 
 }
