@@ -51,7 +51,7 @@ public fun DetectionAndCameraPreview(
         viewModel(factory = CameraViewModelFactory(application, livelinessDetectionOption, false))
     val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
-    val verificationState1 by cameraViewModel.verificationState.collectAsState()
+    val verificationState by cameraViewModel.verificationState.collectAsState()
 
 //    CameraPreviewAndFaceHighlight(
 //        modifier = modifier,
@@ -60,95 +60,91 @@ public fun DetectionAndCameraPreview(
 //        imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase,
 //        classifiedFace = faceImage
 //    )
-    Log.d("COMPOSE TEST", "calling preview function")
-    PreviewAndUserGuidance(
+    CameraPreviewWithAreaMarker(
         modifier = modifier,
         cameraSelector = cameraSelector,
         cameraProvider = cameraProvider,
         imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase
     )
-    Box(
+    UserGuidance(verificationState)
+}
+
+@Composable
+private fun UserGuidance(verificationState: VerificationState) {
+    Log.d("COMPOSE TEST", "RECOMPOSING UserGuidance")
+
+    Column(
         Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.3f)
+            .fillMaxHeight(0.3f),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Log.d("COMPOSE TEST", "RECOMPOSING COLLUMN")
 
-            when (val verificationState = verificationState1) {
-                is VerificationState.Error -> {
-                    var shouldShowDialog by remember {
-                        mutableStateOf(true)
-                    }
-                    if (shouldShowDialog) {
-                        AlertDialog(
-                            onDismissRequest = { shouldShowDialog = false },
-                            confirmButton = {
-                                Button(onClick = {
-                                    shouldShowDialog = false
-                                }) {
-                                    Text(text = "OK")
-                                }
-                            },
-                            title = { Text("Error") },
-                            text = { Text(verificationState.message) })
-                    }
+        when (val verificationState = verificationState) {
+            is VerificationState.Error -> {
+                var shouldShowDialog by remember {
+                    mutableStateOf(true)
                 }
-
-                VerificationState.Finished -> {
-                    Log.d("COMPOSE TEST", "RECOMPOSING ALERT")
-
-                    var shouldShowDialog by remember {
-                        mutableStateOf(true)
-                    }
-                    if (shouldShowDialog) {
-                        AlertDialog(
-                            onDismissRequest = { shouldShowDialog = false },
-                            confirmButton = {
-                                Button(onClick = {
-                                    shouldShowDialog = false
-                                }) {
-                                    Text(text = "OK")
-                                }
-                            },
-                            title = { Text("Successfully verified") },
-                            text = { Text("You have successfully verified your account") })
-                    }
+                if (shouldShowDialog) {
+                    AlertDialog(
+                        onDismissRequest = { shouldShowDialog = false },
+                        confirmButton = {
+                            Button(onClick = {
+                                shouldShowDialog = false
+                            }) {
+                                Text(text = "OK")
+                            }
+                        },
+                        title = { Text("Error") },
+                        text = { Text(verificationState.message) })
                 }
+            }
 
-                VerificationState.Start -> {
-                    //TODO
+            VerificationState.Finished -> {
+                var shouldShowDialog by remember {
+                    mutableStateOf(true)
                 }
-
-                is VerificationState.Working -> {
-                    Log.d("COMPOSE TEST", "RECOMPOSING TEXT")
-
-                    Text(
-                        text = verificationState.message
-                    )
+                if (shouldShowDialog) {
+                    AlertDialog(
+                        onDismissRequest = { shouldShowDialog = false },
+                        confirmButton = {
+                            Button(onClick = {
+                                shouldShowDialog = false
+                            }) {
+                                Text(text = "OK")
+                            }
+                        },
+                        title = { Text("Successfully verified") },
+                        text = { Text("You have successfully verified your account") })
                 }
+            }
+
+            VerificationState.Start -> {
+                //TODO
+            }
+
+            is VerificationState.Working -> {
+                Text(
+                    text = verificationState.message
+                )
             }
         }
     }
 }
 
 @Composable
-internal fun PreviewAndUserGuidance(
+internal fun CameraPreviewWithAreaMarker(
     cameraSelector: CameraSelector,
     modifier: Modifier = Modifier,
     cameraProvider: ProcessCameraProvider?,
     imageAnalysisUseCase: ImageAnalysis
 ) {
-    Log.d("COMPOSE TEST", "RECOMPOSING whole preview")
+    Log.d("COMPOSE TEST", "RECOMPOSING camera preview")
 
     Box(modifier = modifier.fillMaxSize()) {
         key(cameraProvider) {
             val lifecycleOwner = LocalLifecycleOwner.current
-            Log.d("COMPOSE TEST", "RECOMPOSING CameraPreview")
             CameraPreview(onUseCase = {
                 cameraProvider?.apply {
                     // Must unbind the use-cases before rebinding them.
@@ -183,7 +179,6 @@ internal fun PreviewAndUserGuidance(
                         topLeft = Offset(x = ovalX, y = ovalY),
                         style = Stroke(width = 2.dp.toPx())
                     )
-
                 })
         }
     }
