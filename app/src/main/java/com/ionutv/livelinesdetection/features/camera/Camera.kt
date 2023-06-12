@@ -28,9 +28,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
@@ -44,7 +47,6 @@ internal fun DetectionAndCameraPreview(
     livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES,
     cameraViewModel: CameraViewModel
 ) {
-    Log.d("COMPOSE TEST", "detection and preview recomposed")
     val context = LocalContext.current
     val application = context.applicationContext as Application
     val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
@@ -69,7 +71,6 @@ internal fun DetectionAndCameraPreview(
 
 @Composable
 private fun UserGuidance(verificationState: VerificationState) {
-    Log.d("COMPOSE TEST", "RECOMPOSING UserGuidance")
 
     Column(
         Modifier
@@ -124,7 +125,14 @@ private fun UserGuidance(verificationState: VerificationState) {
 
             is VerificationState.Working -> {
                 Text(
-                    text = verificationState.message
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        shadow = Shadow(
+                            color = Color.Blue,
+                            blurRadius = 16f,
+                            offset = Offset(0f, 0f)
+                        )
+                    ), text = verificationState.message
                 )
             }
         }

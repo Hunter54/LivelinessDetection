@@ -15,30 +15,39 @@ import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOptio
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 import com.ionutv.livelinesdetection.utils.executor
 import com.ionutv.livelinesdetection.utils.getCameraProvider
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalGetImage::class)
 internal class CameraViewModel(
-    application: Application,
-    detectionOption: LivelinessDetectionOption,
+    private val application: Application,
     isDebugMode: Boolean
 ) :
     AndroidViewModel(application) {
 
-    private val imageAnalyzer =
+
+    private val _detectionOption = MutableStateFlow(LivelinessDetectionOption.SMILE)
+    val detectionOption = _detectionOption.asStateFlow()
+
+    private var imageAnalyzer =
         ImageAnalyzer(
             application, viewModelScope,
-            detectionOption,
+            _detectionOption.value,
             isDebugMode
         )
 
-    internal val verificationState = imageAnalyzer.verificationState.stateIn(
-        viewModelScope,
-        SharingStarted.Lazily, VerificationState.Start
-    )
+    @kotlin.OptIn(ExperimentalCoroutinesApi::class)
+    internal val verificationState = _detectionOption.flatMapLatest { latestOption ->
+        imageAnalyzer.changeDetectionOption(latestOption)
+        imageAnalyzer.verificationState
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, VerificationState.Start)
 
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
@@ -69,7 +78,14 @@ internal class CameraViewModel(
         }
     }
 
+    fun updateDetectionOption(detectionOption: LivelinessDetectionOption) {
+        _detectionOption.update {
+            detectionOption
+        }
+    }
+
     override fun onCleared() {
+        Log.d("VIEWMODEL TEST", "onCleared")
         imageAnalyzer.closeResources()
         super.onCleared()
     }

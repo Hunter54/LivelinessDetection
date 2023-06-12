@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ionutv.livelinesdetection.features.camera.CameraViewModel
+import com.ionutv.livelinesdetection.features.camera.CameraViewModelFactory
 import com.ionutv.livelinesdetection.features.camera.DetectionAndCameraPreview
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.permissions.Permission
@@ -85,14 +88,12 @@ fun MainScreen() {
                 },
                 content = {
                     Log.d("COMPOSE TEST", "calling detection and preview function")
-                    var selectedOption by remember {
-                        mutableStateOf(LivelinessDetectionOption.SMILE)
-                    }
                     Box(Modifier.fillMaxSize()) {
                         val context = LocalContext.current
                         val application = context.applicationContext as Application
-                        val viewModel =
-                            CameraViewModel(application, selectedOption, isDebugMode = false)
+                        val viewModel : CameraViewModel =
+                            viewModel(factory = CameraViewModelFactory(application, isDebugMode = false))
+                        val selectedOption by viewModel.detectionOption.collectAsState()
                         DetectionAndCameraPreview(
                             livelinessDetectionOption = selectedOption,
                             cameraViewModel = viewModel
@@ -105,9 +106,7 @@ fun MainScreen() {
                             LivelinessDetectionOptionSelection(
                                 list =
                                 LivelinessDetectionOption.values().toList(),
-                                onSelectedChanged = {
-                                    selectedOption = it
-                                },
+                                onSelectedChanged = viewModel::updateDetectionOption,
                                 selectedOption = selectedOption
                             )
                         }

@@ -46,19 +46,47 @@ internal open class ImageAnalyzerCommon(
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
 
 
-    private val verificationFlow = when (detectionOption) {
+    private var verificationFlow = when (detectionOption) {
         LivelinessDetectionOption.SMILE -> Smile()
-        LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(emotionClassifier, faceNetFaceRecognition)
+        LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(
+            emotionClassifier,
+            faceNetFaceRecognition
+        )
+
         LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
         LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(
             faceNetFaceRecognition
         )
+
         LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomEmotion(
             emotionClassifier,
             faceNetFaceRecognition
         )
     }
-    internal val verificationState = verificationFlow.verificationStateFlow
+    internal var verificationState = verificationFlow.verificationStateFlow
+        private set
+
+    internal fun changeDetectionOption(detectionOption: LivelinessDetectionOption) {
+        verificationFlow = when (detectionOption) {
+            LivelinessDetectionOption.SMILE -> Smile()
+            LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(
+                emotionClassifier,
+                faceNetFaceRecognition
+            )
+
+            LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
+            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(
+                faceNetFaceRecognition
+            )
+
+            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomEmotion(
+                emotionClassifier,
+                faceNetFaceRecognition
+            )
+        }
+        verificationState = verificationFlow.verificationStateFlow
+        verificationFlow.initialise()
+    }
 
     private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
     protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
