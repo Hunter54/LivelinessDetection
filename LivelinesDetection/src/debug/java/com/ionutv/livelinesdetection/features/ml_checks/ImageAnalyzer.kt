@@ -1,8 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks
 
 import android.app.Application
-import android.graphics.BitmapFactory
-import com.ionutv.livelinessdetection.R
 import kotlinx.coroutines.CoroutineScope
 
 internal class ImageAnalyzer(
@@ -17,13 +15,6 @@ internal class ImageAnalyzer(
     }
 
     private fun setupFaceRecognitionExistingFaces(application: Application) {
-        val ionut = BitmapFactory.decodeResource(application.resources, R.drawable.ionut)
-        val paul = BitmapFactory.decodeResource(application.resources, R.drawable.paul)
-        val dorian = BitmapFactory.decodeResource(application.resources, R.drawable.dorian)
-        val fabian = BitmapFactory.decodeResource(application.resources, R.drawable.fabian)
-        addImageToFaceList(ionut, "ionut")
-        addImageToFaceList(paul, "paul")
-        addImageToFaceList(dorian, "dorian")
-        addImageToFaceList(fabian, "fabian")
+
     }
 }

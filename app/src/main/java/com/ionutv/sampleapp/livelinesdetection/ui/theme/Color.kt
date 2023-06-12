@@ -1,4 +1,4 @@
-package com.ionutv.livelinesdetection.ui.theme
+package com.ionutv.sampleapp.livelinesdetection.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

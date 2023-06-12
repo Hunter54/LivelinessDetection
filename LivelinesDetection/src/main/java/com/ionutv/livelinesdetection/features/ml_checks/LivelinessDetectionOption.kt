@@ -1,6 +1,6 @@
 package com.ionutv.livelinesdetection.features.ml_checks
 
-public enum class LivelinessDetectionOption() {
+public enum class LivelinessDetectionOption {
     SMILE(),
     //    BLINK(::Smile),
 //    SMILE_BLINK(::Smile),

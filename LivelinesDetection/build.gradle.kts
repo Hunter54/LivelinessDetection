@@ -38,6 +38,12 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
+    packaging {
+        resources.excludes.add("META-INF/notice.txt")
+    }
+//    androidResources {
+//        noCompress += "tflite"
+//    }
 }
 
 dependencies {

@@ -38,7 +38,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs = listOf("-Xcontext-receivers", "-Xexplicit-api=warning")
+        freeCompilerArgs = listOf("-Xcontext-receivers")
     }
     kotlin {
         explicitApiWarning()
@@ -50,7 +50,7 @@ android {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
 
-    androidResources{
+    androidResources {
         noCompress += "tflite"
     }
     packaging {
@@ -62,6 +62,7 @@ android {
 }
 
 dependencies {
+    implementation(project(mapOf("path" to ":LivelinesDetection")))
     kapt(libs.google.hiltandroidcompiler)
     implementation(libs.coil)
     implementation(libs.core.ktx)
