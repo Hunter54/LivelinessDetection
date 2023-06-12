@@ -19,4 +19,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "LivelinesDetection"
 include(":app")
- 
+include(":LivelinesDetection")
