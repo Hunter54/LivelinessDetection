@@ -88,29 +88,7 @@ fun MainScreen() {
                 },
                 content = {
                     Log.d("COMPOSE TEST", "calling detection and preview function")
-                    Box(Modifier.fillMaxSize()) {
-                        val context = LocalContext.current
-                        val application = context.applicationContext as Application
-                        val viewModel : CameraViewModel =
-                            viewModel(factory = CameraViewModelFactory(application, isDebugMode = false))
-                        val selectedOption by viewModel.detectionOption.collectAsState()
-                        DetectionAndCameraPreview(
-                            livelinessDetectionOption = selectedOption,
-                            cameraViewModel = viewModel
-                        )
-                        Column(
-                            Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            LivelinessDetectionOptionSelection(
-                                list =
-                                LivelinessDetectionOption.values().toList(),
-                                onSelectedChanged = viewModel::updateDetectionOption,
-                                selectedOption = selectedOption
-                            )
-                        }
-                    }
+                    Detection()
 
                 })
         }
@@ -123,49 +101,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun LivelinessDetectionOptionSelection(
-    list: List<LivelinessDetectionOption>,
-    onSelectedChanged: (LivelinessDetectionOption) -> Unit,
-    selectedOption: LivelinessDetectionOption
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {
-        expanded = it
-    }) {
-        TextField(
-            modifier = Modifier.menuAnchor(),
-            readOnly = true,
-            value = selectedOption.name,
-            onValueChange = { },
-            label = { Text("Categories") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded
-                )
-            },
-            colors = ExposedDropdownMenuDefaults.textFieldColors()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            }
-        ) {
-            list.forEach { selectionOption ->
-                DropdownMenuItem(
-                    text = { Text(text = selectionOption.name) },
-                    onClick = {
-                        onSelectedChanged(selectionOption)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
 }
 
 @Preview(showBackground = true)
