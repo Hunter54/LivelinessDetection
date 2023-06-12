@@ -127,6 +127,9 @@ internal class AngledFaces(
                     VerificationState.Error("Different person in at least one of the images")
                 }
             }
+            on<Event.Start> {
+                transitionTo(State.DetectingFaceStraight)
+            }
         }
         state<State.Finished> {
             onEnter {
@@ -135,10 +138,17 @@ internal class AngledFaces(
                     VerificationState.Finished
                 }
             }
+            on<Event.Start> {
+                transitionTo(State.DetectingFaceStraight)
+            }
         }
     }
 
     override fun initialise() {
+        _verificationStateFlow.update {
+            VerificationState.Start
+        }
+        _faceList.clear()
         machine.transition(Event.Start)
     }
 

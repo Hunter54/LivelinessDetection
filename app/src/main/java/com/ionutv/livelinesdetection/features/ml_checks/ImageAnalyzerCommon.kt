@@ -26,7 +26,7 @@ import java.util.EnumSet
 internal open class ImageAnalyzerCommon(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
-    private val detectionOption: LivelinessDetectionOption,
+    private var detectionOption: LivelinessDetectionOption,
     private val debugMode: Boolean
 ) {
 
@@ -67,7 +67,7 @@ internal open class ImageAnalyzerCommon(
         private set
 
     internal fun changeDetectionOption(detectionOption: LivelinessDetectionOption) {
-        verificationFlow = when (detectionOption) {
+        this.verificationFlow = when (detectionOption) {
             LivelinessDetectionOption.SMILE -> Smile()
             LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(
                 emotionClassifier,
@@ -84,8 +84,9 @@ internal open class ImageAnalyzerCommon(
                 faceNetFaceRecognition
             )
         }
-        verificationState = verificationFlow.verificationStateFlow
-        verificationFlow.initialise()
+        this.detectionOption = detectionOption
+        this.verificationState = verificationFlow.verificationStateFlow
+        this.verificationFlow.initialise()
     }
 
     private var lastAnalyzedFace = FaceClassifierResult.NoFaceDetected
@@ -103,6 +104,10 @@ internal open class ImageAnalyzerCommon(
 
         val result = faceNetFaceRecognition.processImage(bitmap)
         faceList.add(FaceNetFaceRecognition.FaceRecognitionResult(name, result.floatArray))
+    }
+
+    fun resetFlow() {
+        verificationFlow.initialise()
     }
 
     fun closeResources() {

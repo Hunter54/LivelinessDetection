@@ -10,7 +10,6 @@ import com.tinder.StateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,8 +26,8 @@ internal class AngledFacesWithRandomEmotion(
 ) : VerificationFlow {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val angledFacesFlow = AngledFaces(faceRecognition, false)
-    private val emotionFlow = RandomEmotion(emotionRecognition,faceRecognition, false)
+    private lateinit var angledFacesFlow: AngledFaces
+    private lateinit var emotionFlow: RandomEmotion
 
     private sealed class State {
         object Start : State()
@@ -59,7 +58,7 @@ internal class AngledFacesWithRandomEmotion(
 
     private val machine = StateMachine.create<State, Event, Nothing> {
         initialState(State.Start)
-        state<State.Start>{
+        state<State.Start> {
             on<Event.DetectEmotions> {
                 transitionTo(State.DetectEmotions)
             }
@@ -111,6 +110,12 @@ internal class AngledFacesWithRandomEmotion(
                     VerificationState.Error("Different person in at least one of the images")
                 }
             }
+            on<Event.DetectEmotions> {
+                transitionTo(State.DetectEmotions)
+            }
+            on<Event.DetectAngledFaces> {
+                transitionTo(State.DetectAngledFaces)
+            }
         }
         state<State.Finished> {
             onEnter {
@@ -119,10 +124,22 @@ internal class AngledFacesWithRandomEmotion(
                     VerificationState.Finished
                 }
             }
+            on<Event.DetectEmotions> {
+                transitionTo(State.DetectEmotions)
+            }
+            on<Event.DetectAngledFaces> {
+                transitionTo(State.DetectAngledFaces)
+            }
         }
     }
 
     override fun initialise() {
+        _verificationStateFlow.update {
+            VerificationState.Start
+        }
+        angledFacesFlow = AngledFaces(faceRecognition, false)
+        emotionFlow = RandomEmotion(emotionRecognition, faceRecognition, false)
+        _faceList.clear()
         val shouldStartWithEmotions = Random.nextBoolean()
         if (shouldStartWithEmotions) {
             machine.transition(Event.DetectEmotions)
@@ -139,22 +156,27 @@ internal class AngledFacesWithRandomEmotion(
     }
 
     override suspend fun invokeVerificationFlow(face: FaceDetected) {
-        when(machine.state){
+        when (machine.state) {
             State.DetectAngledFaces -> {
                 angledFacesFlow.invokeVerificationFlow(face)
                 if (angledFacesFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectEmotions)
             }
+
             State.DetectEmotions -> {
                 emotionFlow.invokeVerificationFlow(face)
                 if (emotionFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectAngledFaces)
             }
+
             State.CheckAreAllImagesSamePerson -> {
                 _faceList.addAll(emotionFlow.faceList)
                 Log.d("Angled and emotions TEST", "emotions SIZE ${emotionFlow.faceList.size}")
                 _faceList.addAll(angledFacesFlow.faceList)
-                Log.d("Angled and emotions TEST", "angledFaces SIZE ${angledFacesFlow.faceList.size}")
+                Log.d(
+                    "Angled and emotions TEST",
+                    "angledFaces SIZE ${angledFacesFlow.faceList.size}"
+                )
                 Log.d("Angled and emotions TEST", "LIST SIZE ${faceList.size}")
                 if (areAllImagesSamePerson(faceList)) {
                     machine.transition(Event.Finish)
@@ -162,14 +184,17 @@ internal class AngledFacesWithRandomEmotion(
                     machine.transition(Event.Error)
                 }
             }
+
             State.Finished -> {
-                coroutineScope.cancel()
+                //TODO
             }
-            else ->{
+
+            else -> {
 
             }
         }
     }
+
     private fun areAllImagesSamePerson(faceList: List<Bitmap>): Boolean {
         val processedImages = faceList.map {
             faceRecognition.getImageProcessing(it)

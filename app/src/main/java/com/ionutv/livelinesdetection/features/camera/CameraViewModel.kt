@@ -84,6 +84,10 @@ internal class CameraViewModel(
         }
     }
 
+    fun restartFlow() {
+        imageAnalyzer.resetFlow()
+    }
+
     override fun onCleared() {
         Log.d("VIEWMODEL TEST", "onCleared")
         imageAnalyzer.closeResources()

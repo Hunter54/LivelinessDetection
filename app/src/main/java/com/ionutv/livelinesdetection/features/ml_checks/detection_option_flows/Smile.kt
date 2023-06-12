@@ -62,10 +62,17 @@ internal class Smile : VerificationFlow {
                 }
                 Log.d("SMILE TEST", "Detected smile")
             }
+            on<Event.Start> {
+                transitionTo(State.Detecting)
+            }
         }
     }
 
     override fun initialise() {
+        _verificationStateFlow.update {
+            VerificationState.Start
+        }
+        _faceList.clear()
         machine.transition(Event.Start)
     }
 

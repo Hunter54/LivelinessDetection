@@ -113,6 +113,9 @@ internal class RandomEmotion(
                     VerificationState.Finished
                 }
             }
+            on<Event.Start> {
+                transitionTo(State.Detecting)
+            }
         }
         state<State.Error> {
             onEnter {
@@ -121,13 +124,19 @@ internal class RandomEmotion(
                     VerificationState.Error("Different person in at least one of the images")
                 }
             }
+            on<Event.Start> {
+                transitionTo(State.Detecting)
+            }
         }
 
     }
 
     override fun initialise() {
+                _verificationStateFlow.update {
+            VerificationState.Start
+        }
+        _faceList.clear()
         machine.transition(Event.Start)
-
     }
 
     override suspend fun invokeVerificationFlow(face: FaceDetected) {

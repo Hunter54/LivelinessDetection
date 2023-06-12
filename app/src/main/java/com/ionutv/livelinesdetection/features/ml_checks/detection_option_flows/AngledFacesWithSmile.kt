@@ -9,7 +9,6 @@ import com.tinder.StateMachine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,8 +23,8 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
     VerificationFlow {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val smileFlow = Smile()
-    private val angledFacesFlow = AngledFaces(faceRecognition, false)
+    private lateinit var smileFlow : Smile
+    private lateinit var angledFacesFlow : AngledFaces
 
     private sealed class State {
         object Start : State()
@@ -108,6 +107,12 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
                     VerificationState.Error("Different person in at least one of the images")
                 }
             }
+            on<Event.DetectSmile> {
+                transitionTo(State.DetectSmile)
+            }
+            on<Event.DetectAngledFaces> {
+                transitionTo(State.DetectAngledFaces)
+            }
         }
         state<State.Finished> {
             onEnter {
@@ -116,10 +121,23 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
                     VerificationState.Finished
                 }
             }
+            on<Event.DetectSmile> {
+                transitionTo(State.DetectSmile)
+            }
+            on<Event.DetectAngledFaces> {
+                transitionTo(State.DetectAngledFaces)
+            }
         }
     }
 
     override fun initialise() {
+        _verificationStateFlow.update {
+            VerificationState.Start
+        }
+        smileFlow = Smile()
+        angledFacesFlow = AngledFaces(faceRecognition, false)
+
+        _faceList.clear()
         val shouldStartWithSmile = Random.nextBoolean()
         if (shouldStartWithSmile) {
             machine.transition(Event.DetectSmile)
@@ -163,7 +181,7 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
             }
 
             State.Finished -> {
-                coroutineScope.cancel()
+                //TODO
             }
 
             else -> {

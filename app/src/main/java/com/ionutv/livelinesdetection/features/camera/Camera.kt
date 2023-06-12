@@ -66,11 +66,18 @@ internal fun DetectionAndCameraPreview(
         cameraProvider = cameraProvider,
         imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase
     )
-    UserGuidance(verificationState)
+    UserGuidance(
+        verificationState,
+        onErrorAlertDismissed = { cameraViewModel.restartFlow() },
+        onSuccessAlertDismissed = { cameraViewModel.restartFlow() })
 }
 
 @Composable
-private fun UserGuidance(verificationState: VerificationState) {
+private fun UserGuidance(
+    verificationState: VerificationState,
+    onErrorAlertDismissed: () -> Unit,
+    onSuccessAlertDismissed: () -> Unit
+) {
 
     Column(
         Modifier
@@ -90,6 +97,7 @@ private fun UserGuidance(verificationState: VerificationState) {
                         onDismissRequest = { shouldShowDialog = false },
                         confirmButton = {
                             Button(onClick = {
+                                onErrorAlertDismissed()
                                 shouldShowDialog = false
                             }) {
                                 Text(text = "OK")
@@ -109,6 +117,7 @@ private fun UserGuidance(verificationState: VerificationState) {
                         onDismissRequest = { shouldShowDialog = false },
                         confirmButton = {
                             Button(onClick = {
+                                onSuccessAlertDismissed()
                                 shouldShowDialog = false
                             }) {
                                 Text(text = "OK")
