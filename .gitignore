@@ -32,3 +32,5 @@ google-services.json
 # Android Profiling
 *.hprof
 app/src/main/res/drawable/sscropped.png
+
+github.properties
