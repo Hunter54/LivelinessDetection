@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 import com.ionutv.livelinesdetection.utils.DisplayAlert
 
@@ -37,8 +36,9 @@ import com.ionutv.livelinesdetection.utils.DisplayAlert
 internal fun DetectionAndCameraPreview(
     modifier: Modifier = Modifier,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA,
-    livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES,
-    cameraViewModel: CameraViewModel
+    cameraViewModel: CameraViewModel,
+    onSuccessAlertDismissed: () -> Unit,
+    onErrorAlertDismissed: () -> Unit
 ) {
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
     val verificationState by cameraViewModel.verificationState.collectAsState()
@@ -59,8 +59,11 @@ internal fun DetectionAndCameraPreview(
     )
     UserGuidance(
         verificationState,
-        onErrorAlertDismissed = { cameraViewModel.restartFlow() },
-        onSuccessAlertDismissed = { cameraViewModel.restartFlow() })
+        onErrorAlertDismissed = {
+            onErrorAlertDismissed()
+            cameraViewModel.restartFlow()
+        },
+        onSuccessAlertDismissed = onSuccessAlertDismissed)
 }
 
 @Composable
@@ -147,8 +150,8 @@ private fun CameraPreviewWithAreaMarker(
                 .fillMaxSize()
                 .drawWithContent {
 
-                    val ovalWidth = size.width / 1.8f
-                    val ovalHeight = size.height / 2.3f
+                    val ovalWidth = size.width / 1.77f
+                    val ovalHeight = size.height / 2.27f
                     val ovalX = size.width / 2f - ovalWidth / 2f
                     val ovalY = size.height / 2f - ovalHeight / 2f
                     drawContent()

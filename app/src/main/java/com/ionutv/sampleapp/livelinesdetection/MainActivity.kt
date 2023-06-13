@@ -10,7 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.ionutv.livelinesdetection.features.permission.DetectionWithPermission
+import com.ionutv.livelinesdetection.features.camera.DetectionWithPermission
+import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.sampleapp.livelinesdetection.ui.theme.LivelinesDetectionTheme
 
 
@@ -33,7 +34,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    DetectionWithPermission()
+    DetectionWithPermission(
+        LivelinessDetectionOption.ANGLED_FACES,
+        onSuccessAlertDismissed = {},
+        debugMode = true
+    )
 }
 
 @Composable

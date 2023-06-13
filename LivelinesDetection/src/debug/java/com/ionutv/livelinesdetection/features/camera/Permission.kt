@@ -1,4 +1,4 @@
-package com.ionutv.livelinesdetection.features.permission
+package com.ionutv.livelinesdetection.features.camera
 
 import android.Manifest
 import android.util.Log
@@ -16,13 +16,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.ionutv.livelinesdetection.features.camera.Detection
+import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.permissions.Permission
 import com.ionutv.livelinesdetection.utils.openApplicationSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetectionWithPermission() {
+public fun DetectionWithPermission(
+    detectionOption: LivelinessDetectionOption,
+    onSuccessAlertDismissed: () -> Unit,
+    onErrorAlertDismissed: () -> Unit = {},
+    debugMode: Boolean = false
+) {
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
         val context = LocalContext.current
@@ -48,7 +53,12 @@ fun DetectionWithPermission() {
                 },
                 content = {
                     Log.d("COMPOSE TEST", "calling detection and preview function")
-                    Detection()
+                    Detection(
+                        detectionOption,
+                        onSuccessAlertDismissed,
+                        onErrorAlertDismissed,
+                        debugMode
+                    )
                 })
         }
     }

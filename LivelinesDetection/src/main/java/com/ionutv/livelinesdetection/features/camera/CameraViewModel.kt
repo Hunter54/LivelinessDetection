@@ -22,8 +22,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalGetImage::class)
 internal class CameraViewModel(
-    private val application: Application,
-    isDebugMode: Boolean
+    private val application: Application
 ) :
     AndroidViewModel(application) {
 
@@ -31,7 +30,6 @@ internal class CameraViewModel(
         ImageAnalyzer(
             application, viewModelScope
         )
-
 
     val detectionOption = imageAnalyzer.detectionOption
 
