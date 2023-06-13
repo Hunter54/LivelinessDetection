@@ -2,89 +2,46 @@ package com.ionutv.livelinesdetection.features.ml_checks
 
 import android.app.Application
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFaces
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithRandomEmotion
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithSmile
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
+import com.ionutv.livelinessdetection.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
-import java.util.EnumSet
 
-internal open class ImageAnalyzerCommon(
+internal class ImageAnalyzerDebug(
     private val application: Application,
     private val viewModelScope: CoroutineScope,
-    private val debugMode: Boolean,
 ) {
-
     private val _detectionOption = MutableStateFlow(LivelinessDetectionOption.SMILE)
     internal val detectionOption = _detectionOption.asStateFlow()
     private val facesFlow = MutableSharedFlow<FaceDetected>()
-    private val verificationFlow = _detectionOption.map { detectionOption ->
-        when (detectionOption) {
-            LivelinessDetectionOption.SMILE -> Smile()
-            LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(
-                emotionClassifier,
-                faceNetFaceRecognition
-            )
 
-            LivelinessDetectionOption.ANGLED_FACES -> AngledFaces(faceNetFaceRecognition)
-            LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE -> AngledFacesWithSmile(
-                faceNetFaceRecognition
-            )
+    protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
+    internal val resultFlow = _resultFlow.asSharedFlow()
 
-            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomEmotion(
-                emotionClassifier,
-                faceNetFaceRecognition
-            )
-        }.also {
-            it.initialise()
-        }
-    }.shareIn(viewModelScope, SharingStarted.Lazily, replay = 1)
     @OptIn(ExperimentalCoroutinesApi::class)
-    internal val verificationState = verificationFlow.combine(facesFlow) { flow, face ->
-        flow.invokeVerificationFlow(face)
-        flow
-    }.distinctUntilChanged().flatMapLatest {
-        it.verificationStateFlow
-    }
+    internal val verificationState = MutableStateFlow(VerificationState.Start)
+
     private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
     private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
-    private val optionsWithMlKitClassification: Set<LivelinessDetectionOption> = EnumSet.of(
-        LivelinessDetectionOption.SMILE,
-//        LivelinessDetectionOption.BLINK,
-//        LivelinessDetectionOption.SMILE_BLINK,
-//        LivelinessDetectionOption.RANDOM_EMOTION_BLINK,
-        LivelinessDetectionOption.ANGLED_FACES_WITH_SMILE,
-//        LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION_BLINK
-    )
 
     private var isProcessing = false
     private val nameScoreHashmap = HashMap<String, ArrayList<Float>>()
-
-    protected val _resultFlow = MutableSharedFlow<FaceClassifierResult>()
-    val resultFlow = _resultFlow.asSharedFlow()
 
     private val faceList = mutableListOf<FaceNetFaceRecognition.FaceRecognitionResult>()
 
@@ -96,7 +53,7 @@ internal open class ImageAnalyzerCommon(
     }
 
     fun resetFlow() {
-        verificationFlow.replayCache.firstOrNull()?.initialise()
+        //Not available
     }
 
     fun closeResources() {
@@ -115,8 +72,7 @@ internal open class ImageAnalyzerCommon(
             return
         }
         isProcessing = true
-        val detectSmilingOrEyesOpen = _detectionOption.value in optionsWithMlKitClassification
-        detectFace(image, detectSmilingOrEyesOpen) {
+        detectFace(image, true) {
             viewModelScope.launch(Dispatchers.IO) {
                 when (it) {
                     is FaceDetectionResult.Error -> {
@@ -141,28 +97,24 @@ internal open class ImageAnalyzerCommon(
     }
 
     private suspend fun analyzeFace(it: FaceDetected) {
-        if (!debugMode) {
-            facesFlow.emit(it)
-        } else {
-            val croppedBitmap =
-                ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
-            val result = emotionClassifier.classifyEmotions(croppedBitmap)
-            if (result.isNotEmpty()) {
-                Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
-            }
-            val embedding = faceNetFaceRecognition.processImage(croppedBitmap)
-            val userName = checkFaceSimilarity(embedding)
-            _resultFlow.emit(
-                FaceClassifierResult.FaceClassified(
-                    it.boundaries,
-                    image = it.image,
-                    croppedImage = croppedBitmap,
-                    emotions = result,
-                    name = userName,
-                    faceAngle = it.headAngle
-                )
-            )
+        val croppedBitmap =
+            ImageClassifierService.cropBitmapExample(it.image, it.boundaries)
+        val result = emotionClassifier.classifyEmotions(croppedBitmap)
+        if (result.isNotEmpty()) {
+            Log.d("EMOTION_CLASSIFIER IS", result.first().toString())
         }
+        val embedding = faceNetFaceRecognition.processImage(croppedBitmap)
+        val userName = checkFaceSimilarity(embedding)
+        _resultFlow.emit(
+            FaceClassifierResult.FaceClassified(
+                it.boundaries,
+                image = it.image,
+                croppedImage = croppedBitmap,
+                emotions = result,
+                name = userName,
+                faceAngle = it.headAngle
+            )
+        )
     }
 
     private fun checkFaceSimilarity(embedding: TensorBuffer): String {
@@ -236,5 +188,16 @@ internal open class ImageAnalyzerCommon(
             }
         }
         return bestScoreName
+    }
+
+    init {
+        setupFaceRecognitionExistingFaces(application)
+    }
+
+    private fun setupFaceRecognitionExistingFaces(application: Application) {
+        val ionut = BitmapFactory.decodeResource(application.resources, R.drawable.ionut)
+        val paul = BitmapFactory.decodeResource(application.resources, R.drawable.paul)
+        addImageToFaceList(ionut, "ionut")
+        addImageToFaceList(paul, "paul")
     }
 }

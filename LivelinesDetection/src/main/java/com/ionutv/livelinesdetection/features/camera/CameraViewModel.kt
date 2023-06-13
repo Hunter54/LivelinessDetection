@@ -29,8 +29,7 @@ internal class CameraViewModel(
 
     private var imageAnalyzer =
         ImageAnalyzer(
-            application, viewModelScope,
-            isDebugMode
+            application, viewModelScope
         )
 
 
@@ -42,17 +41,17 @@ internal class CameraViewModel(
         VerificationState.Start
     )
 
+    val faceDetectionFlow = imageAnalyzer.resultFlow.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily,
+        initialValue = FaceClassifierResult.NoFaceDetected
+    )
+
     val cameraProviderFlow = flow {
         application.getCameraProvider().also {
             emit(it)
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    val faceResultFlow = imageAnalyzer.resultFlow.stateIn(
-        viewModelScope,
-        SharingStarted.Lazily,
-        initialValue = FaceClassifierResult.NoFaceDetected
-    )
 
     val imageAnalysisUseCase = ImageAnalysis.Builder()
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)

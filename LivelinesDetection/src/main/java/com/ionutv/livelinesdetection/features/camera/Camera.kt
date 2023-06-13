@@ -1,6 +1,5 @@
 package com.ionutv.livelinesdetection.features.camera
 
-import android.app.Application
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -11,16 +10,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -30,14 +24,13 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ionutv.livelinesdetection.features.ml_checks.FaceClassifierResult
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
+import com.ionutv.livelinesdetection.utils.DisplayAlert
 
 @Composable
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
@@ -47,11 +40,9 @@ internal fun DetectionAndCameraPreview(
     livelinessDetectionOption: LivelinessDetectionOption = LivelinessDetectionOption.ANGLED_FACES,
     cameraViewModel: CameraViewModel
 ) {
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val faceImage: FaceClassifierResult by cameraViewModel.faceResultFlow.collectAsState()
     val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
     val verificationState by cameraViewModel.verificationState.collectAsState()
+    val faceDetectionResult by cameraViewModel.faceDetectionFlow.collectAsState()
 
 //    CameraPreviewAndFaceHighlight(
 //        modifier = modifier,
@@ -87,49 +78,30 @@ private fun UserGuidance(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        when (val verificationState = verificationState) {
+        when (verificationState) {
             is VerificationState.Error -> {
-                var shouldShowDialog by remember {
-                    mutableStateOf(true)
-                }
-                if (shouldShowDialog) {
-                    AlertDialog(
-                        onDismissRequest = { shouldShowDialog = false },
-                        confirmButton = {
-                            Button(onClick = {
-                                onErrorAlertDismissed()
-                                shouldShowDialog = false
-                            }) {
-                                Text(text = "OK")
-                            }
-                        },
-                        title = { Text("Error") },
-                        text = { Text(verificationState.message) })
-                }
+                DisplayAlert("Error", verificationState.message, onErrorAlertDismissed)
             }
 
             VerificationState.Finished -> {
-                var shouldShowDialog by remember {
-                    mutableStateOf(true)
-                }
-                if (shouldShowDialog) {
-                    AlertDialog(
-                        onDismissRequest = { shouldShowDialog = false },
-                        confirmButton = {
-                            Button(onClick = {
-                                onSuccessAlertDismissed()
-                                shouldShowDialog = false
-                            }) {
-                                Text(text = "OK")
-                            }
-                        },
-                        title = { Text("Successfully verified") },
-                        text = { Text("You have successfully verified your account") })
-                }
+                DisplayAlert(
+                    title = "Success",
+                    message = "You have successfully verified your account",
+                    onSuccessAlertDismissed
+                )
             }
 
             VerificationState.Start -> {
-                //TODO
+                Text(
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        shadow = Shadow(
+                            color = Color.Blue,
+                            blurRadius = 16f,
+                            offset = Offset(0f, 0f)
+                        )
+                    ), text = "Please enter camera view"
+                )
             }
 
             is VerificationState.Working -> {
@@ -149,7 +121,7 @@ private fun UserGuidance(
 }
 
 @Composable
-internal fun CameraPreviewWithAreaMarker(
+private fun CameraPreviewWithAreaMarker(
     cameraSelector: CameraSelector,
     modifier: Modifier = Modifier,
     cameraProvider: ProcessCameraProvider?,
