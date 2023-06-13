@@ -1,4 +1,4 @@
-package com.ionutv.livelinesdetection.features.camera
+package com.ionutv.livelinesdetection.utils
 
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api

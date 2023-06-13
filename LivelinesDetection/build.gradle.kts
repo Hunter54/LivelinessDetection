@@ -1,9 +1,15 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    `maven-publish`
 }
-
+val githubPropertiesFile = rootProject.file("github.properties");
+val githubProperties = Properties()
+githubProperties.load(FileInputStream(githubPropertiesFile))
 android {
     namespace = "com.ionutv.livelinessdetection"
     compileSdk = 33
@@ -41,10 +47,73 @@ android {
     packaging {
         resources.excludes.add("META-INF/notice.txt")
     }
-//    androidResources {
-//        noCompress += "tflite"
-//    }
+    afterEvaluate {
+        publishing {
+            publications {
+                create<MavenPublication>("release") {
+                    run {
+                        groupId = "com.ionutv"
+                        artifactId = "livelinessdetection"
+                        version = "0.2"
+                        from(components["release"])
+                    }
+//                    pom {
+//                        withXml {
+//                            // add dependencies to pom
+//                            val dependencies = asNode().appendNode("dependencies")
+//                            configurations.implementation.get().allDependencies.forEach {
+//                                if (it.group != null &&
+//                                    "unspecified" != it.name &&
+//                                    it.version != null
+//                                ) {
+//
+//                                    val dependencyNode = dependencies.appendNode("dependency")
+//                                    dependencyNode.appendNode("groupId", it.group)
+//                                    dependencyNode.appendNode("artifactId", it.name)
+//                                    dependencyNode.appendNode("version", it.version)
+//                                }
+//                            }
+////                            configurations.api.get().allDependencies.forEach {
+////                                if (it.group != null &&
+////                                    "unspecified" != it.name &&
+////                                    it.version != null
+////                                ) {
+////
+////                                    val dependencyNode = dependencies.appendNode("dependency")
+////                                    dependencyNode.appendNode("groupId", it.group)
+////                                    dependencyNode.appendNode("artifactId", it.name)
+////                                    dependencyNode.appendNode("version", it.version)
+////                                }
+////                            }
+//                        }
+//                    }
+                }
+            }
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    /** Configure path of your package repository on Github
+                     *  Replace GITHUB_USERID with your/organisation Github userID and REPOSITORY with the repository name on GitHub
+                     */
+                    url =
+                        uri("https://maven.pkg.github.com/Hunter54/LivelinessDetection/") // Github Package
+                    credentials {
+                        //Fetch these details from the properties file or from Environment variables
+                        username =
+                            githubProperties["gpr.user"] as String? ?: System.getenv("GPR_USER")
+                        password = githubProperties["gpr.key"] as String?
+                            ?: System.getenv("GPR_API_KEY")
+                    }
+                }
+            }
+        }
+    }
+    aaptOptions {
+        noCompress += "tflite"
+    }
 }
+
+
 
 dependencies {
 

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ionutv.livelinesdetection.features.ml_checks.LivelinessDetectionOption
+import com.ionutv.livelinesdetection.utils.LivelinessDetectionOptionSelection
 
 @Composable
 public fun Detection(
