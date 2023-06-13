@@ -49,7 +49,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
-
     androidResources {
         noCompress += "tflite"
     }
@@ -85,10 +84,4 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
-    implementation("com.tinder.statemachine:statemachine:0.2.0")
-    implementation("org.tensorflow:tensorflow-lite:0.0.0-nightly-SNAPSHOT")
-    // The GPU delegate library is optional. Depend on it as needed.
-    implementation("org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly-SNAPSHOT")
-    implementation("org.tensorflow:tensorflow-lite-support:0.0.0-nightly-SNAPSHOT")
-    implementation("org.tensorflow:tensorflow-lite-gpu-api:0.0.0-nightly-SNAPSHOT")
 }
