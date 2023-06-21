@@ -155,16 +155,16 @@ internal class AngledFacesWithRandomEmotion(
         }.launchIn(coroutineScope)
     }
 
-    override suspend fun invokeVerificationFlow(face: FaceDetected) {
+    override suspend fun performFaceCheck(face: FaceDetected) {
         when (machine.state) {
             State.DetectAngledFaces -> {
-                angledFacesFlow.invokeVerificationFlow(face)
+                angledFacesFlow.performFaceCheck(face)
                 if (angledFacesFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectEmotions)
             }
 
             State.DetectEmotions -> {
-                emotionFlow.invokeVerificationFlow(face)
+                emotionFlow.performFaceCheck(face)
                 if (emotionFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectAngledFaces)
             }

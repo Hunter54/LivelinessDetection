@@ -46,7 +46,7 @@ internal class Blink : VerificationFlow {
 
     }
 
-    override suspend fun invokeVerificationFlow(faceClassified: FaceDetected) {
+    override suspend fun performFaceCheck(faceClassified: FaceDetected) {
         val machine = StateMachine.create<DetectStates, BlinkVerificationEvent, Nothing> {
             initialState(DetectStates.WaitingInitialEyesOpen)
             state<DetectStates.WaitingInitialEyesOpen> {

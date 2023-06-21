@@ -76,7 +76,7 @@ internal class Smile : VerificationFlow {
         machine.transition(Event.Start)
     }
 
-    override suspend fun invokeVerificationFlow(face: FaceDetected) {
+    override suspend fun performFaceCheck(face: FaceDetected) {
         when (machine.state) {
             State.Detecting -> {
                 if (face.smiling == true) {

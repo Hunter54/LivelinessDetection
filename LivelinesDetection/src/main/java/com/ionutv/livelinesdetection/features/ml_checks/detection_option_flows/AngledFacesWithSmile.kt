@@ -153,16 +153,16 @@ internal class AngledFacesWithSmile(private val faceRecognition: FaceNetFaceReco
         }.launchIn(coroutineScope)
     }
 
-    override suspend fun invokeVerificationFlow(face: FaceDetected) {
+    override suspend fun performFaceCheck(face: FaceDetected) {
         when (machine.state) {
             State.DetectAngledFaces -> {
-                angledFacesFlow.invokeVerificationFlow(face)
+                angledFacesFlow.performFaceCheck(face)
                 if (angledFacesFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectSmile)
             }
 
             State.DetectSmile -> {
-                smileFlow.invokeVerificationFlow(face)
+                smileFlow.performFaceCheck(face)
                 if (smileFlow.verificationStateFlow.value == VerificationState.Finished)
                     machine.transition(Event.DetectAngledFaces)
             }

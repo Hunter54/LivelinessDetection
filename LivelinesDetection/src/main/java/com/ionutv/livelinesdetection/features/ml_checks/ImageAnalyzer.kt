@@ -64,7 +64,7 @@ internal open class ImageAnalyzer(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val verificationState = verificationFlow.combine(_faceDetectedResult) { flow, face ->
-        flow.invokeVerificationFlow(face)
+        flow.performFaceCheck(face)
         flow
     }.distinctUntilChanged().flatMapLatest {
         it.verificationStateFlow
