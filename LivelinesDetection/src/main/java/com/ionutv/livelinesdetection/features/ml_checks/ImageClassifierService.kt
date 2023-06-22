@@ -25,6 +25,7 @@ internal abstract class ImageClassifierService constructor(
     modelPath: String,
     labelPath: String
 ) {
+
     companion object {
         private const val LOG_TAG = "TENSERFLOW_EMOTION_LITE_TAG"
         fun cropBitmapExample(
@@ -41,10 +42,6 @@ internal abstract class ImageClassifierService constructor(
             return ret
         }
     }
-
-    //Retrieve labels only if path is not empty
-    internal val labels: List<String> =
-        labelPath.takeIf { it.isNotEmpty() }?.let { FileUtil.loadLabels(context, it) } ?: listOf()
 
     protected var imageSizeX: Int
 
@@ -66,6 +63,10 @@ internal abstract class ImageClassifierService constructor(
         useXNNPACK = true
         useNNAPI = true
     }
+
+    //Retrieve labels only if path is not empty
+    internal val labels: List<String> =
+        labelPath.takeIf { it.isNotEmpty() }?.let { FileUtil.loadLabels(context, it) } ?: listOf()
 
     protected val tflite: Interpreter =
         Interpreter(FileUtil.loadMappedFile(context, modelPath), tfliteOptions)

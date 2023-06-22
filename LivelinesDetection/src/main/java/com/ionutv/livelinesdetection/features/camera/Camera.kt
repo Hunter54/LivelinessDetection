@@ -1,6 +1,5 @@
 package com.ionutv.livelinesdetection.features.camera
 
-import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
@@ -28,6 +26,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
 import com.ionutv.livelinesdetection.utils.DisplayAlert
 
@@ -40,17 +39,10 @@ internal fun DetectionAndCameraPreview(
     onSuccessAlertDismissed: () -> Unit,
     onErrorAlertDismissed: () -> Unit
 ) {
-    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsState()
-    val verificationState by cameraViewModel.verificationState.collectAsState()
-    val faceDetectionResult by cameraViewModel.faceDetectionFlow.collectAsState()
+    val cameraProvider by cameraViewModel.cameraProviderFlow.collectAsStateWithLifecycle()
+    val verificationState by cameraViewModel.verificationState.collectAsStateWithLifecycle()
 
-//    CameraPreviewAndFaceHighlight(
-//        modifier = modifier,
-//        cameraSelector = cameraSelector,
-//        cameraProvider = cameraProvider,
-//        imageAnalysisUseCase = cameraViewModel.imageAnalysisUseCase,
-//        classifiedFace = faceImage
-//    )
+
     CameraPreviewWithAreaMarker(
         modifier = modifier,
         cameraSelector = cameraSelector,
@@ -130,8 +122,6 @@ private fun CameraPreviewWithAreaMarker(
     cameraProvider: ProcessCameraProvider?,
     imageAnalysisUseCase: ImageAnalysis
 ) {
-    Log.d("COMPOSE TEST", "RECOMPOSING camera preview")
-
     Box(modifier = modifier.fillMaxSize()) {
         key(cameraProvider) {
             val lifecycleOwner = LocalLifecycleOwner.current
