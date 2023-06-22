@@ -1,15 +1,12 @@
-import java.io.FileInputStream
-import java.util.Properties
-
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     `maven-publish`
 }
-val githubPropertiesFile = rootProject.file("github.properties");
-val githubProperties = Properties()
-githubProperties.load(FileInputStream(githubPropertiesFile))
+//val githubPropertiesFile = rootProject.file("github.properties");
+//val githubProperties = Properties()
+//githubProperties.load(FileInputStream(githubPropertiesFile))
 android {
     namespace = "com.ionutv.livelinessdetection"
     compileSdk = 33
@@ -89,23 +86,23 @@ android {
 //                    }
                 }
             }
-            repositories {
-                maven {
-                    name = "GitHubPackages"
-                    /** Configure path of your package repository on Github
-                     *  Replace GITHUB_USERID with your/organisation Github userID and REPOSITORY with the repository name on GitHub
-                     */
-                    url =
-                        uri("https://maven.pkg.github.com/Hunter54/LivelinessDetection/") // Github Package
-                    credentials {
-                        //Fetch these details from the properties file or from Environment variables
-                        username =
-                            githubProperties["gpr.user"] as String? ?: System.getenv("GPR_USER")
-                        password = githubProperties["gpr.key"] as String?
-                            ?: System.getenv("GPR_API_KEY")
-                    }
-                }
-            }
+//            repositories {
+//                maven {
+//                    name = "GitHubPackages"
+//                    /** Configure path of your package repository on Github
+//                     *  Replace GITHUB_USERID with your/organisation Github userID and REPOSITORY with the repository name on GitHub
+//                     */
+//                    url =
+//                        uri("https://maven.pkg.github.com/Hunter54/LivelinessDetection/") // Github Package
+//                    credentials {
+//                        //Fetch these details from the properties file or from Environment variables
+//                        username =
+//                            githubProperties["gpr.user"] as String? ?: System.getenv("GPR_USER")
+//                        password = githubProperties["gpr.key"] as String?
+//                            ?: System.getenv("GPR_API_KEY")
+//                    }
+//                }
+//            }
         }
     }
     aaptOptions {

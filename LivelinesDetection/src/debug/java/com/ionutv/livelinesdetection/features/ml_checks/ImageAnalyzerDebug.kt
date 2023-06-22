@@ -2,7 +2,6 @@ package com.ionutv.livelinesdetection.features.ml_checks
 
 import android.app.Application
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
@@ -12,7 +11,6 @@ import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetec
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
-import com.ionutv.livelinessdetection.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -195,9 +193,6 @@ internal class ImageAnalyzerDebug(
     }
 
     private fun setupFaceRecognitionExistingFaces(application: Application) {
-        val ionut = BitmapFactory.decodeResource(application.resources, R.drawable.ionut)
-        val paul = BitmapFactory.decodeResource(application.resources, R.drawable.paul)
-        addImageToFaceList(ionut, "ionut")
-        addImageToFaceList(paul, "paul")
+
     }
 }
