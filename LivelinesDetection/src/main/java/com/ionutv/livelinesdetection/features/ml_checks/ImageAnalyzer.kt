@@ -4,11 +4,11 @@ import android.app.Application
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFaces
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithRandomEmotion
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithRandomFacialExpression
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.AngledFacesWithSmile
-import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomEmotion
+import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.RandomFacialExpression
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.Smile
-import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
+import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.FacialExpressionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
@@ -43,7 +43,7 @@ internal open class ImageAnalyzer(
     private val verificationFlow = _detectionOption.map { detectionOption ->
         when (detectionOption) {
             LivelinessDetectionOption.SMILE -> Smile()
-            LivelinessDetectionOption.RANDOM_EMOTION -> RandomEmotion(
+            LivelinessDetectionOption.RANDOM_EMOTION -> RandomFacialExpression(
                 emotionClassifier,
                 faceNetFaceRecognition
             )
@@ -53,7 +53,7 @@ internal open class ImageAnalyzer(
                 faceNetFaceRecognition
             )
 
-            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomEmotion(
+            LivelinessDetectionOption.ANGLED_FACES_WITH_EMOTION -> AngledFacesWithRandomFacialExpression(
                 emotionClassifier,
                 faceNetFaceRecognition
             )
@@ -70,7 +70,7 @@ internal open class ImageAnalyzer(
         it.verificationStateFlow
     }
 
-    private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
+    private val emotionClassifier: FacialExpressionImageClassifier = FacialExpressionImageClassifier(application)
     private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
     private val optionsWithMlKitClassification: Set<LivelinessDetectionOption> = EnumSet.of(
         LivelinessDetectionOption.SMILE,

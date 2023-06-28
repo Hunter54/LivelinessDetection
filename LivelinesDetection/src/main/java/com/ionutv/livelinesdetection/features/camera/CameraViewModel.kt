@@ -39,6 +39,7 @@ internal class CameraViewModel(
         VerificationState.Start
     )
 
+
     val faceDetectionFlow = imageAnalyzer.resultFlow.stateIn(
         viewModelScope,
         SharingStarted.Lazily,

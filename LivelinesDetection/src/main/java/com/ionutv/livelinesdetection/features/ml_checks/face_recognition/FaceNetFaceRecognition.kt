@@ -31,10 +31,10 @@ internal class FaceNetFaceRecognition(context: Context) : ImageClassifierService
         }
 
         fun computeCosineSimilarity(first: FloatArray, second: FloatArray): Float {
-            val mag1 = sqrt(first.map { it * it }.sum())
-            val mag2 = sqrt(second.map { it * it }.sum())
+            val sqr1 = sqrt(first.map { it * it }.sum())
+            val sqr2 = sqrt(second.map { it * it }.sum())
             val dot = first.mapIndexed { i, j -> j * second[i] }.sum()
-            return dot / (mag1 * mag2)
+            return dot / (sqr1 * sqr2)
         }
 
         internal fun isImageSamePerson(

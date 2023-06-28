@@ -13,22 +13,6 @@ import kotlinx.coroutines.flow.update
 
 internal class Smile : VerificationFlow {
 
-    private sealed class State {
-        object Start : State()
-        object Detecting : State()
-        object Detected : State()
-    }
-
-    private sealed class SideEffect {
-        object Detecting : SideEffect()
-        object Detected : SideEffect()
-    }
-
-    private sealed class Event {
-        object Start : Event()
-        object Detected : Event()
-    }
-
     private val _faceList = mutableListOf<Bitmap>()
     override val faceList: List<Bitmap> get() = _faceList.toList()
 
@@ -36,6 +20,17 @@ internal class Smile : VerificationFlow {
         MutableStateFlow<VerificationState>(VerificationState.Start)
     override val verificationStateFlow: StateFlow<VerificationState> =
         _verificationStateFlow.asStateFlow()
+
+    private sealed class State {
+        object Start : State()
+        object Detecting : State()
+        object Detected : State()
+    }
+
+    private sealed class Event {
+        object Start : Event()
+        object Detected : Event()
+    }
 
     private val machine = StateMachine.create<State, Event, Nothing> {
         initialState(State.Start)

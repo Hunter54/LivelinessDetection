@@ -21,7 +21,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-internal class EmotionImageClassifier(
+internal class FacialExpressionImageClassifier(
     context: Context,
     private val maxResultNumber: Int = 3
 ) : ImageClassifierService(
@@ -32,7 +32,9 @@ internal class EmotionImageClassifier(
     private val preprocessNormalizeOp = NormalizeOp(0f, 255f)
     private val postProcessorNormalize0p = NormalizeOp(0.0f, 1.0f)
     private val probabilityProcessor =
-        TensorProcessor.Builder().add(postProcessorNormalize0p).build()
+        TensorProcessor.Builder()
+            .add(postProcessorNormalize0p)
+            .build()
 
     override fun processImage(bitmap: Bitmap): TensorBuffer {
         inputImageBuffer = preProcessAndLoadImage(bitmap)

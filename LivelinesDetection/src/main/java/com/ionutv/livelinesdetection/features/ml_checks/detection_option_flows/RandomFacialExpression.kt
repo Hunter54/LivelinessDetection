@@ -3,7 +3,7 @@ package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 import android.graphics.Bitmap
 import android.util.Log
 import com.ionutv.livelinesdetection.features.ml_checks.ImageClassifierService
-import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
+import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.FacialExpressionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.ionutv.livelinesdetection.utils.Constants
@@ -16,8 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-internal class RandomEmotion(
-    private val emotionClassifier: EmotionImageClassifier,
+internal class RandomFacialExpression(
+    private val emotionClassifier: FacialExpressionImageClassifier,
     private val faceRecognition: FaceNetFaceRecognition,
     private val shouldCheckFaceSimilarity: Boolean = true,
     emotionsNumberToDetect: Int = 2
@@ -52,7 +52,8 @@ internal class RandomEmotion(
         val emotionLabels = emotionClassifier.labels.toMutableList()
         while (this.size != emotionsNumberToDetect) {
             val emotion = emotionLabels.random()
-            add(emotion)
+            if(emotion!="Disgusted" && emotion!="Sad")
+                add(emotion)
             emotionLabels.remove(emotion)
         }
     }

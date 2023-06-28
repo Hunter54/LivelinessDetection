@@ -35,11 +35,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     DetectionWithPermission(
-        LivelinessDetectionOption.ANGLED_FACES,
+        LivelinessDetectionOption.RANDOM_EMOTION,
         onSuccessAlertDismissed = {},
         debugMode = true
     )
 }
+
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

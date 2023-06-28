@@ -2,7 +2,7 @@ package com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows
 
 import android.graphics.Bitmap
 import android.util.Log
-import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
+import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.FacialExpressionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_recognition.FaceNetFaceRecognition
 import com.ionutv.livelinesdetection.utils.elementPairs
@@ -20,14 +20,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlin.random.Random
 
-internal class AngledFacesWithRandomEmotion(
-    private val emotionRecognition: EmotionImageClassifier,
+internal class AngledFacesWithRandomFacialExpression(
+    private val emotionRecognition: FacialExpressionImageClassifier,
     private val faceRecognition: FaceNetFaceRecognition
 ) : VerificationFlow {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private lateinit var angledFacesFlow: AngledFaces
-    private lateinit var emotionFlow: RandomEmotion
+    private lateinit var emotionFlow: RandomFacialExpression
 
     private sealed class State {
         object Start : State()
@@ -138,7 +138,7 @@ internal class AngledFacesWithRandomEmotion(
             VerificationState.Start
         }
         angledFacesFlow = AngledFaces(faceRecognition, false)
-        emotionFlow = RandomEmotion(emotionRecognition, faceRecognition, false)
+        emotionFlow = RandomFacialExpression(emotionRecognition, faceRecognition, false)
         _faceList.clear()
         val shouldStartWithEmotions = Random.nextBoolean()
         if (shouldStartWithEmotions) {
