@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageProxy
 import com.ionutv.livelinesdetection.features.ml_checks.detection_option_flows.VerificationState
-import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.EmotionImageClassifier
+import com.ionutv.livelinesdetection.features.ml_checks.emotion_detection.FacialExpressionImageClassifier
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetected
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.FaceDetectionResult
 import com.ionutv.livelinesdetection.features.ml_checks.face_detection.detectFace
@@ -35,7 +35,7 @@ internal class ImageAnalyzerDebug(
     @OptIn(ExperimentalCoroutinesApi::class)
     internal val verificationState = MutableStateFlow(VerificationState.Start)
 
-    private val emotionClassifier: EmotionImageClassifier = EmotionImageClassifier(application)
+    private val emotionClassifier: FacialExpressionImageClassifier = FacialExpressionImageClassifier(application)
     private val faceNetFaceRecognition: FaceNetFaceRecognition = FaceNetFaceRecognition(application)
 
     private var isProcessing = false
@@ -193,6 +193,6 @@ internal class ImageAnalyzerDebug(
     }
 
     private fun setupFaceRecognitionExistingFaces(application: Application) {
-
+        // add images for face recognition
     }
 }
