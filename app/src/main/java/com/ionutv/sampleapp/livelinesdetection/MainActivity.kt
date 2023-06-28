@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     DetectionWithPermission(
-        LivelinessDetectionOption.RANDOM_EMOTION,
+        LivelinessDetectionOption.RANDOM_FACIAL_EXPRESSION,
         onSuccessAlertDismissed = {},
         debugMode = true
     )
